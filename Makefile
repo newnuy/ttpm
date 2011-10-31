@@ -3,7 +3,7 @@ RM    = rm -rf
 STRIP = strip
 
 
-objects = ttpm.o points.o
+objects = ttpm.o points.o ver.o
 
 
 ttpr: $(objects)
