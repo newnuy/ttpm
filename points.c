@@ -361,7 +361,6 @@ int ballot(struct playerInfo *p_playerInfo[], int playerNum)
     }
 
     /* simplify the array and print the ballot result */
-    printf("抽签结果:\n");
     for (i = 0; i < lines; ++i)
         for (j = 1; j < cols; ++j) {
             anotherPlayerLine = *(p_ballotArray + i*cols + j);
@@ -375,6 +374,7 @@ int ballot(struct playerInfo *p_playerInfo[], int playerNum)
             }
         }
 
+    printf("抽签结果:\n");
     printBallotResult(p_playerInfo, playerNum, p_ballotArray, lines, cols);
 
     free(p_ballotArray);
@@ -447,11 +447,15 @@ int printInfo(struct playerInfo *p_playerInfo[], int playerNum)
 int printBallotResult(struct playerInfo *p_playerInfo[],
         int playerNum, int *p_ballotArray, int lines, int cols)
 {
+    FILE *fp_swp;
     int anotherPlayerLine;
+    char c;
     int i;
     int j;
     int k;
 
+    /* print ballot result and write to file */
+    fp_swp = fopen(BALLOT_SWP_FILE_PATH, "w");
     for (i = 0; i < lines; ++i)
         for (j = 1; j < cols; ++j) {
             anotherPlayerLine = *(p_ballotArray + i*cols + j);
@@ -459,6 +463,7 @@ int printBallotResult(struct playerInfo *p_playerInfo[],
                 continue;
             for (k = 0; k < playerNum; ++k)
                 if (p_playerInfo[k]->num == *(p_ballotArray + i*cols)) {
+                    fprintf(fp_swp, " %d", p_playerInfo[k]->num);
                     printf("(%c)%s", p_playerInfo[k]->level,
                             p_playerInfo[k]->name);
                     break;
@@ -467,12 +472,24 @@ int printBallotResult(struct playerInfo *p_playerInfo[],
             for (k = 0; k < playerNum; ++k)
                 if (p_playerInfo[k]->num ==
                         *(p_ballotArray + anotherPlayerLine*cols)) {
+                    fprintf(fp_swp, " %d", p_playerInfo[k]->num);
                     printf("%s(%c)", p_playerInfo[k]->name,
                             p_playerInfo[k]->level);
                     break;
                 }
             printf("\n");
         }
+    fprintf(fp_swp, "\n");
+    fclose(fp_swp);
+
+    printf("\n保存本次抽签结果到文件，覆盖上次抽签结果[y]/n: ");
+    scanf("%c", &c);
+    while (getchar() != '\n')
+        ;
+    if (c == 'y' || c == 'Y') {
+        remove(BALLOT_FILE_PATH);
+        rename(BALLOT_SWP_FILE_PATH, BALLOT_FILE_PATH);
+    }
 
     return 0;
 }
