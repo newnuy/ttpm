@@ -24,6 +24,8 @@
 #define DATA_FILE_SWP_PATH      "./files/data.swp"
 #define WEEK_DATE_FILE_PATH     "./files/week_date"
 #define WEEK_DATE_SWP_FILE_PATH "./files/week_date.swp"
+#define BALLOT_FILE_PATH        "./files/ballot"
+#define BALLOT_SWP_FILE_PATH    "./files/ballot.swp"
 
 struct oneGameInfo {
     int week;
@@ -76,6 +78,8 @@ int addPlayer(struct playerInfo* p_playerInfo[], int *p_playerNum);
 int ballot(struct playerInfo *p_playerInfo[], int playerNum);
 int recordOneGameResult(struct playerInfo *p_playerInfo[], int playerNum);
 int printInfo(struct playerInfo *p_playerInfo[], int playerNum);
+int printBallotResult(struct playerInfo *p_playerInfo[],
+        int playerNum, int *p_ballotArray, int lines, int cols);
 int calcFromOneNewGameResult(struct playerInfo *p_playerInfo[],
         int playerNum, int oneGameResult[][3], int resultNum);
 int addOneGameResult(struct playerInfo *p_playerInfo[], int playerNum,
@@ -269,6 +273,21 @@ int ballot(struct playerInfo *p_playerInfo[], int playerNum)
     while (getchar() != '\n')
         ;
 
+    /* make sure everyone exist */
+    for (i = 0; i < lines; ++i) {
+        for (l = 0; l < playerNum; ++l)
+            if (p_playerInfo[l]->num == *(p_ballotArray + i*cols))
+                break;
+        if (l == playerNum) {
+            printf("\n\n%d号选手不存在...\n", *(p_ballotArray + i*cols));
+            free(p_ballotArray);
+            printf("Enter键返回...");
+            while (getchar() != '\n')
+                ;
+            return -3;
+        }
+    }
+
     /* more random sort */
     for (l = 0; l < RANDOM_LOOP * lines; ++l) {
         i = rand() % lines;
@@ -354,39 +373,11 @@ int ballot(struct playerInfo *p_playerInfo[], int playerNum)
                         break;
                     }
             }
-            else
-                continue;
-            /* print the ballot result */
-            for (l = 0; l < playerNum; ++l)
-                if (p_playerInfo[l]->num == *(p_ballotArray + i*cols)) {
-                    printf("(%c)%s", p_playerInfo[l]->level,
-                            p_playerInfo[l]->name);
-                    break;
-                }
-            if (l == playerNum) {
-                printf("\n\n选手序号不存在...\n");
-                printf("Enter键返回...");
-                while (getchar() != '\n')
-                    ;
-                return -2;
-            }
-            printf("    VS    ");
-            for (l = 0; l < playerNum; ++l)
-                if (p_playerInfo[l]->num ==
-                        *(p_ballotArray + anotherPlayerLine*cols)) {
-                    printf("%s(%c)", p_playerInfo[l]->name,
-                            p_playerInfo[l]->level);
-                    break;
-                }
-            printf("\n");
-            if (l == playerNum) {
-                printf("\n\n选手序号不存在...\n");
-                printf("Enter键返回...");
-                while (getchar() != '\n')
-                    ;
-                return -2;
-            }
         }
+
+    printBallotResult(p_playerInfo, playerNum, p_ballotArray, lines, cols);
+
+    free(p_ballotArray);
 
     printf("\n");
     printf("Enter键返回...");
@@ -447,6 +438,41 @@ int printInfo(struct playerInfo *p_playerInfo[], int playerNum)
             return -1;
             break;
     }
+
+    return 0;
+}
+
+
+
+int printBallotResult(struct playerInfo *p_playerInfo[],
+        int playerNum, int *p_ballotArray, int lines, int cols)
+{
+    int anotherPlayerLine;
+    int i;
+    int j;
+    int k;
+
+    for (i = 0; i < lines; ++i)
+        for (j = 1; j < cols; ++j) {
+            anotherPlayerLine = *(p_ballotArray + i*cols + j);
+            if (anotherPlayerLine == -1)
+                continue;
+            for (k = 0; k < playerNum; ++k)
+                if (p_playerInfo[k]->num == *(p_ballotArray + i*cols)) {
+                    printf("(%c)%s", p_playerInfo[k]->level,
+                            p_playerInfo[k]->name);
+                    break;
+                }
+            printf("    VS    ");
+            for (k = 0; k < playerNum; ++k)
+                if (p_playerInfo[k]->num ==
+                        *(p_ballotArray + anotherPlayerLine*cols)) {
+                    printf("%s(%c)", p_playerInfo[k]->name,
+                            p_playerInfo[k]->level);
+                    break;
+                }
+            printf("\n");
+        }
 
     return 0;
 }
