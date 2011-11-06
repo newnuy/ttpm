@@ -16,6 +16,7 @@
 #define YES                     1
 #define NO                      0
 #define NAME_LEN_MAX            32
+#define TEXT_LEN_MAX            32
 #define PLAYERS_NUM_MAX         64
 #define RANDOM_LOOP             8
 #define PLAYERS_FILE_PATH       "./files/players"
@@ -24,6 +25,8 @@
 #define DATA_FILE_SWP_PATH      "./files/data.swp"
 #define WEEK_DATE_FILE_PATH     "./files/week_date"
 #define WEEK_DATE_SWP_FILE_PATH "./files/week_date.swp"
+#define BALLOT_FILE_PATH        "./files/ballot"
+#define BALLOT_SWP_FILE_PATH    "./files/ballot.swp"
 
 struct oneGameInfo {
     int week;
@@ -76,10 +79,14 @@ int addPlayer(struct playerInfo* p_playerInfo[], int *p_playerNum);
 int ballot(struct playerInfo *p_playerInfo[], int playerNum);
 int recordOneGameResult(struct playerInfo *p_playerInfo[], int playerNum);
 int printInfo(struct playerInfo *p_playerInfo[], int playerNum);
+int printBallotResult(struct playerInfo *p_playerInfo[],
+        int playerNum, int *p_ballotArray, int lines, int cols);
 int calcFromOneNewGameResult(struct playerInfo *p_playerInfo[],
         int playerNum, int oneGameResult[][3], int resultNum);
 int addOneGameResult(struct playerInfo *p_playerInfo[], int playerNum,
         int oneGameResult[][3]);
+int addOneGameResultFromBallotFile(struct playerInfo *p_playerInfo[],
+        int playerNum, int oneGameResult[][3]);
 int editOneGameResult(void);
 void printPlayerName(struct playerInfo *p_playerInfo[], int playerNum);
 void printAllPlayerMainInfo(struct playerInfo *p_playerInfo[], int playerNum);
@@ -269,6 +276,21 @@ int ballot(struct playerInfo *p_playerInfo[], int playerNum)
     while (getchar() != '\n')
         ;
 
+    /* make sure everyone exist */
+    for (i = 0; i < lines; ++i) {
+        for (l = 0; l < playerNum; ++l)
+            if (p_playerInfo[l]->num == *(p_ballotArray + i*cols))
+                break;
+        if (l == playerNum) {
+            printf("\n\n%d号选手不存在...\n", *(p_ballotArray + i*cols));
+            free(p_ballotArray);
+            printf("Enter键返回...");
+            while (getchar() != '\n')
+                ;
+            return -3;
+        }
+    }
+
     /* more random sort */
     for (l = 0; l < RANDOM_LOOP * lines; ++l) {
         i = rand() % lines;
@@ -342,7 +364,6 @@ int ballot(struct playerInfo *p_playerInfo[], int playerNum)
     }
 
     /* simplify the array and print the ballot result */
-    printf("抽签结果:\n");
     for (i = 0; i < lines; ++i)
         for (j = 1; j < cols; ++j) {
             anotherPlayerLine = *(p_ballotArray + i*cols + j);
@@ -354,39 +375,11 @@ int ballot(struct playerInfo *p_playerInfo[], int playerNum)
                         break;
                     }
             }
-            else
-                continue;
-            /* print the ballot result */
-            for (l = 0; l < playerNum; ++l)
-                if (p_playerInfo[l]->num == *(p_ballotArray + i*cols)) {
-                    printf("(%c)%s", p_playerInfo[l]->level,
-                            p_playerInfo[l]->name);
-                    break;
-                }
-            if (l == playerNum) {
-                printf("\n\n选手序号不存在...\n");
-                printf("Enter键返回...");
-                while (getchar() != '\n')
-                    ;
-                return -2;
-            }
-            printf("    VS    ");
-            for (l = 0; l < playerNum; ++l)
-                if (p_playerInfo[l]->num ==
-                        *(p_ballotArray + anotherPlayerLine*cols)) {
-                    printf("%s(%c)", p_playerInfo[l]->name,
-                            p_playerInfo[l]->level);
-                    break;
-                }
-            printf("\n");
-            if (l == playerNum) {
-                printf("\n\n选手序号不存在...\n");
-                printf("Enter键返回...");
-                while (getchar() != '\n')
-                    ;
-                return -2;
-            }
         }
+
+    printBallotResult(p_playerInfo, playerNum, p_ballotArray, lines, cols);
+
+    free(p_ballotArray);
 
     printf("\n");
     printf("Enter键返回...");
@@ -402,8 +395,15 @@ int recordOneGameResult(struct playerInfo *p_playerInfo[], int playerNum)
 {
     int oneGameResult[PLAYERS_NUM_MAX][3];
     int resultNum;
+    char recordSourceSelection;
 
-    resultNum = addOneGameResult(p_playerInfo, playerNum, oneGameResult);
+    printf("比赛场次从记录上次抽签结果的文件读入[y]/n: ");
+    scanf("%c", &recordSourceSelection);
+    if (recordSourceSelection == 'y' || recordSourceSelection == 'Y')
+        resultNum = addOneGameResultFromBallotFile(p_playerInfo, playerNum,
+                oneGameResult);
+    else
+        resultNum = addOneGameResult(p_playerInfo, playerNum, oneGameResult);
     calcFromOneNewGameResult(p_playerInfo, playerNum, oneGameResult, resultNum);
     printAllPlayerMainInfo(p_playerInfo, playerNum);
 
@@ -446,6 +446,66 @@ int printInfo(struct playerInfo *p_playerInfo[], int playerNum)
         default:
             return -1;
             break;
+    }
+
+    return 0;
+}
+
+
+
+int printBallotResult(struct playerInfo *p_playerInfo[],
+        int playerNum, int *p_ballotArray, int lines, int cols)
+{
+    FILE *fp_swp;
+    char text[TEXT_LEN_MAX];
+    int anotherPlayerLine;
+    char c;
+    int i;
+    int j;
+    int k;
+
+    /* print ballot result and write to file */
+    fp_swp = fopen(BALLOT_SWP_FILE_PATH, "w");
+    printf("请输入本次抽签标识字串，比如 20111201 : ");
+    scanf("%s", text);
+    while (getchar() != '\n')
+        ;
+    fprintf(fp_swp, " %s ", text);
+    fprintf(fp_swp, " %d", lines*(cols-1)/2);
+    printf("抽签结果:\n");
+    for (i = 0; i < lines; ++i)
+        for (j = 1; j < cols; ++j) {
+            anotherPlayerLine = *(p_ballotArray + i*cols + j);
+            if (anotherPlayerLine == -1)
+                continue;
+            for (k = 0; k < playerNum; ++k)
+                if (p_playerInfo[k]->num == *(p_ballotArray + i*cols)) {
+                    fprintf(fp_swp, " %d", p_playerInfo[k]->num);
+                    printf("(%c)%s", p_playerInfo[k]->level,
+                            p_playerInfo[k]->name);
+                    break;
+                }
+            printf("    VS    ");
+            for (k = 0; k < playerNum; ++k)
+                if (p_playerInfo[k]->num ==
+                        *(p_ballotArray + anotherPlayerLine*cols)) {
+                    fprintf(fp_swp, " %d", p_playerInfo[k]->num);
+                    printf("%s(%c)", p_playerInfo[k]->name,
+                            p_playerInfo[k]->level);
+                    break;
+                }
+            printf("\n");
+        }
+    fprintf(fp_swp, "\n");
+    fclose(fp_swp);
+
+    printf("\n保存本次抽签结果到文件，覆盖上次抽签结果[y]/n: ");
+    scanf("%c", &c);
+    while (getchar() != '\n')
+        ;
+    if (c == 'y' || c == 'Y') {
+        remove(BALLOT_FILE_PATH);
+        rename(BALLOT_SWP_FILE_PATH, BALLOT_FILE_PATH);
     }
 
     return 0;
@@ -601,9 +661,6 @@ int addOneGameResult(struct playerInfo *p_playerInfo[], int playerNum,
     int i;
     int resultNum;
 
-    fp_weekDate = fopen(WEEK_DATE_FILE_PATH, "a");
-    fp = fopen(DATA_FILE_PATH, "a");
-
     /* get xxxx-xx-xx */
     printf("年: ");
     scanf("%d", &year);
@@ -645,18 +702,125 @@ int addOneGameResult(struct playerInfo *p_playerInfo[], int playerNum,
     }
     resultNum = i+1;
 
+    fp_weekDate = fopen(WEEK_DATE_FILE_PATH, "a");
+    fp = fopen(DATA_FILE_PATH, "a");
+
     /* write week, xxxx-xx-xx */
     week = getCurrentGameWeek() + 1;
-    if (fp_weekDate != NULL) {
+    if (fp_weekDate != NULL)
         fprintf(fp_weekDate, " %d %d %d %d \n", week, year, month, day);
-    }
     /* write result */
     if (fp != NULL) {
         fprintf(fp, " %d %d", week, resultNum);
-        for (i = 0; i < resultNum; ++i) {
+        for (i = 0; i < resultNum; ++i)
             fprintf(fp, "  %d %d %d", oneGameResult[i][0],
                     oneGameResult[i][1], oneGameResult[i][2]);
+        fprintf(fp, "\n");
+    }
+
+    fclose(fp_weekDate);
+    fclose(fp);
+
+    return resultNum;
+}
+
+
+
+int addOneGameResultFromBallotFile(struct playerInfo *p_playerInfo[],
+        int playerNum, int oneGameResult[][3])
+{
+    FILE *fp;
+    FILE *fp_weekDate;
+    FILE *fp_ballot;
+    char text[TEXT_LEN_MAX];
+    int resultNum;
+    int year;
+    int month;
+    int day;
+    int week;
+    int playerA;
+    int playerB;
+    char winPlayer;
+    int i;
+    int j;
+
+    /* get xxxx-xx-xx */
+    printf("年: ");
+    scanf("%d", &year);
+    while (getchar() != '\n')
+        ;
+    printf("月: ");
+    scanf("%d", &month);
+    while (getchar() != '\n')
+        ;
+    printf("日: ");
+    scanf("%d", &day);
+    while (getchar() != '\n')
+        ;
+
+    fp_ballot = fopen(BALLOT_FILE_PATH, "r");
+    if (fp_ballot != NULL) {
+        fscanf(fp_ballot, "%s", text);
+        printf("现在使用标识字串为 %s 的抽签结果...\n", text);
+        printf("  a -前者胜    A -前者胜，后者弃权\n");
+        printf("    a/A                b/B\n");
+        fscanf(fp_ballot, "%d", &resultNum);
+        for (i = 0; i < resultNum; ++i) {
+            fscanf(fp_ballot, "%d %d", &playerA, &playerB);
+            for (j = 0; j < playerNum; ++j)
+                if (p_playerInfo[j]->num == playerA)
+                    break;
+            printf("[%2d]%s", playerA, p_playerInfo[j]->name);
+            printf("    VS    ");
+            for (j = 0; j < playerNum; ++j)
+                if (p_playerInfo[j]->num == playerB)
+                    break;
+            printf("%s[%2d]", p_playerInfo[j]->name, playerB);
+            printf("        胜方a/b/A/B: ");
+            scanf("%c", &winPlayer);
+            while (getchar() != '\n')
+                ;
+            switch (winPlayer) {
+                case 'a':
+                    oneGameResult[i][0] = playerA;
+                    oneGameResult[i][1] = playerB;
+                    oneGameResult[i][2] = 0;
+                    break;
+                case 'b':
+                    oneGameResult[i][0] = playerB;
+                    oneGameResult[i][1] = playerA;
+                    oneGameResult[i][2] = 0;
+                    break;
+                case 'A':
+                    oneGameResult[i][0] = playerA;
+                    oneGameResult[i][1] = playerB;
+                    oneGameResult[i][2] = 1;
+                    break;
+                case 'B':
+                    oneGameResult[i][0] = playerB;
+                    oneGameResult[i][1] = playerA;
+                    oneGameResult[i][2] = 1;
+                    break;
+                default:
+                    break;
+            }
         }
+    }
+    fclose(fp_ballot);
+
+    fp_weekDate = fopen(WEEK_DATE_FILE_PATH, "a");
+    fp = fopen(DATA_FILE_PATH, "a");
+
+    /* write week, xxxx-xx-xx */
+    week = getCurrentGameWeek() + 1;
+    if (fp_weekDate != NULL)
+        fprintf(fp_weekDate, " %d %d %d %d \n", week, year, month, day);
+    /* write result */
+    if (fp != NULL) {
+        fprintf(fp, " %d %d", week, resultNum);
+        for (i = 0; i < resultNum; ++i)
+            fprintf(fp, "  %d %d %d", oneGameResult[i][0],
+                    oneGameResult[i][1], oneGameResult[i][2]);
         fprintf(fp, "\n");
     }
 
