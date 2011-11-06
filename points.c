@@ -762,8 +762,8 @@ int addOneGameResultFromBallotFile(struct playerInfo *p_playerInfo[],
     if (fp_ballot != NULL) {
         fscanf(fp_ballot, "%s", text);
         printf("现在使用标识字串为 %s 的抽签结果...\n", text);
-        printf("    a/A                b/B    ");
-        printf("        小写: 比赛胜    大写: 对手弃权胜\n");
+        printf("  a -前者胜    A -前者胜，后者弃权\n");
+        printf("    a/A                b/B\n");
         fscanf(fp_ballot, "%d", &resultNum);
         for (i = 0; i < resultNum; ++i) {
             fscanf(fp_ballot, "%d %d", &playerA, &playerB);
