@@ -404,6 +404,10 @@ int recordOneGameResult(struct playerInfo *p_playerInfo[], int playerNum)
                 oneGameResult);
     else
         resultNum = addOneGameResult(p_playerInfo, playerNum, oneGameResult);
+    if (resultNum == -2) {
+        printf("输入有误\n\n");
+        return -2;
+    }
     calcFromOneNewGameResult(p_playerInfo, playerNum, oneGameResult, resultNum);
     printAllPlayerMainInfo(p_playerInfo, playerNum);
 
@@ -570,7 +574,9 @@ int calcFromOneNewGameResult(struct playerInfo *p_playerInfo[],
                             anotherPlayerLevel = p_playerInfo[l]->level;
                             break;
                         }
-                    if (p_tmp->levelBefore > anotherPlayerLevel)
+                    if (oneGameResult[j][2] == 2)
+                        p_tmp->point += GIVE_UP_BASE_POINT;
+                    else if (p_tmp->levelBefore > anotherPlayerLevel)
                         p_tmp->point += (WIN_BASE_POINT + WIN_STEP_POINT
                                 * (p_tmp->levelBefore - anotherPlayerLevel));
                     else
@@ -688,11 +694,29 @@ int addOneGameResult(struct playerInfo *p_playerInfo[], int playerNum,
         scanf("%d", &oneGameResult[i][1]);
         while (getchar() != '\n')
             ;
-        printf("负方是否弃权y/[n]: ");
+        printf("是否存在弃权y/[n]: ");
         scanf("%c", &c);
         while (getchar() != '\n')
             ;
-        oneGameResult[i][2] = (c == 'y' || c == 'Y') ? 1: 0;
+        if (c == 'y' || c == 'Y') {
+            printf("[a] -负方弃权    [c] -双方弃权: ");
+            scanf("%c", &c);
+            while (getchar() != '\n')
+                ;
+            switch (c) {
+                case 'a':
+                    oneGameResult[i][2] = 1;
+                    break;
+                case 'c':
+                    oneGameResult[i][2] = 2;
+                    break;
+                default:
+                    return -2;
+                    break;
+            }
+        }
+        else
+            oneGameResult[i][2] = 0;
         printf("继续[y]/n: ");
         scanf("%c", &c);
         while (getchar() != '\n')
@@ -762,7 +786,7 @@ int addOneGameResultFromBallotFile(struct playerInfo *p_playerInfo[],
     if (fp_ballot != NULL) {
         fscanf(fp_ballot, "%s", text);
         printf("现在使用标识字串为 %s 的抽签结果...\n", text);
-        printf("  a -前者胜    A -前者胜，后者弃权\n");
+        printf("  a -前者胜    A -前者胜，后者弃权    C -均弃权\n");
         printf("    a/A                b/B\n");
         fscanf(fp_ballot, "%d", &resultNum);
         for (i = 0; i < resultNum; ++i) {
@@ -776,7 +800,7 @@ int addOneGameResultFromBallotFile(struct playerInfo *p_playerInfo[],
                 if (p_playerInfo[j]->num == playerB)
                     break;
             printf("%s[%2d]", p_playerInfo[j]->name, playerB);
-            printf("        胜方a/b/A/B: ");
+            printf("        胜方a/b/A/B/C: ");
             scanf("%c", &winPlayer);
             while (getchar() != '\n')
                 ;
@@ -801,7 +825,13 @@ int addOneGameResultFromBallotFile(struct playerInfo *p_playerInfo[],
                     oneGameResult[i][1] = playerA;
                     oneGameResult[i][2] = 1;
                     break;
+                case 'C':
+                    oneGameResult[i][0] = playerA;
+                    oneGameResult[i][1] = playerB;
+                    oneGameResult[i][2] = 2;
+                    break;
                 default:
+                    return -2;
                     break;
             }
         }
