@@ -43,6 +43,8 @@ struct oneGameInfo {
 
 struct playerInfo {
     int num;
+    int startWeek;
+    int stopWeek;
     char name[NAME_LEN_MAX];
     char sex;
     char level;
@@ -89,6 +91,7 @@ int addOneGameResultFromBallotFile(struct playerInfo *p_playerInfo[],
         int playerNum, int oneGameResult[][3]);
 int editOneGameResult(void);
 void printPlayerName(struct playerInfo *p_playerInfo[], int playerNum);
+void printAllPlayerName(struct playerInfo *p_playerInfo[], int playerNum);
 void printAllPlayerMainInfo(struct playerInfo *p_playerInfo[], int playerNum);
 void printPlayerInfoByType(struct playerInfo *p_playerInfo[], int playerNum,
         int type);
@@ -168,7 +171,7 @@ int addPlayer(struct playerInfo* p_playerInfo[], int *p_playerNum)
 
     /* print players */
     printf("\n当前参赛选手:\n");
-    printPlayerName(p_playerInfo, playerNum);
+    printAllPlayerName(p_playerInfo, playerNum);
 
     /* select to add or delete a player */
     printf("[a]  添加选手\n");
@@ -199,6 +202,8 @@ int addPlayer(struct playerInfo* p_playerInfo[], int *p_playerNum)
             while (getchar() != '\n')
                 ;
             /* init the new player */
+            p_tmp->startWeek = getCurrentGameWeek();
+            p_tmp->stopWeek = 0;
             p_tmp->level = DEFAULT_LEVEL;
             p_tmp->winNum = 0;
             p_tmp->failNum = 0;
@@ -523,16 +528,24 @@ int calcFromOneNewGameResult(struct playerInfo *p_playerInfo[],
     struct calcRankStruct calcRankStruct[PLAYERS_NUM_MAX];
     struct calcOneGameRankStruct calcOneGameRankStruct[PLAYERS_NUM_MAX];
     struct oneGameInfo *p_tmp;
-    int levelProportion;
     int eachLevelLowestRank[LEVEL_NUM-1];
     char anotherPlayerLevel;
+    int actualPlayerNum = 0;
+    int thisWeek;
     int found;
     int i;
     int j;
     int k = 0;
     int l;
+    int m = 0;
 
+    thisWeek = getCurrentGameWeek();
     for (i = 0; i < playerNum; ++i) {
+        if (thisWeek <= p_playerInfo[i]->startWeek ||
+                (p_playerInfo[i]->stopWeek != 0 &&
+                thisWeek > p_playerInfo[i]->stopWeek))
+            continue;
+        ++actualPlayerNum;
         found = 0;
         for (j = 0; j < resultNum; ++j) {
             if (oneGameResult[j][0] == p_playerInfo[i]->num
@@ -553,7 +566,7 @@ int calcFromOneNewGameResult(struct playerInfo *p_playerInfo[],
                         p_tmp = p_tmp->next;
                     }
                     /* init the new oneGameInfo */
-                    p_tmp->week = getCurrentGameWeek();
+                    p_tmp->week = thisWeek;
                     p_tmp->levelBefore = p_playerInfo[i]->level;
                     p_tmp->winNum = 0;
                     p_tmp->failNum = 0;
@@ -614,9 +627,10 @@ int calcFromOneNewGameResult(struct playerInfo *p_playerInfo[],
             ++k;
         }
         /* for rank calculation */
-        calcRankStruct[i].pointXRate = (double)p_playerInfo[i]->point *
+        calcRankStruct[m].pointXRate = (double)p_playerInfo[i]->point *
                 p_playerInfo[i]->rate;
-        calcRankStruct[i].p_playerInfo = p_playerInfo[i];
+        calcRankStruct[m].p_playerInfo = p_playerInfo[i];
+        ++m;
     }
     /* calculate one game rank */
     qsort(calcOneGameRankStruct, k, sizeof(struct calcOneGameRankStruct),
@@ -629,20 +643,27 @@ int calcFromOneNewGameResult(struct playerInfo *p_playerInfo[],
         else
             calcOneGameRankStruct[l].p_oneGameInfo->rank = l+1;
     /* calculate rank */
-    qsort(calcRankStruct, playerNum, sizeof(struct calcRankStruct),
+    qsort(calcRankStruct, actualPlayerNum, sizeof(struct calcRankStruct),
             rankCmpFunction);
-    for (l = 0; l < playerNum; ++l)
+    for (l = 0; l < m; ++l)
         if (l > 0 && calcRankStruct[l].pointXRate ==
                 calcRankStruct[l-1].pointXRate)
             calcRankStruct[l].p_playerInfo->rank =
                     calcRankStruct[l-1].p_playerInfo->rank;
         else
             calcRankStruct[l].p_playerInfo->rank = l+1;
+    for (i = 0; i < playerNum; ++i)
+        if (p_playerInfo[i]->stopWeek != 0 &&
+                thisWeek > p_playerInfo[i]->stopWeek)
+            p_playerInfo[i]->rank = -1;
 
     /* calculate level */
     for (j = 0; j < LEVEL_NUM-1; ++j)
-        eachLevelLowestRank[j] = (int)((j+1) * (1.0/LEVEL_NUM) * playerNum);
+        eachLevelLowestRank[j] =
+                (int)((j+1) * (1.0/LEVEL_NUM) * actualPlayerNum);
     for (i = 0; i < playerNum; ++i) {
+        if (p_playerInfo[i]->rank == -1)
+            continue;
         for (j = 0; j < LEVEL_NUM-1; ++j)
             if (p_playerInfo[i]->rank <= eachLevelLowestRank[j])
                 break;
@@ -873,7 +894,24 @@ void printPlayerName(struct playerInfo *p_playerInfo[], int playerNum)
     int i;
 
     for (i = 0; i < playerNum; ++i)
+        if (p_playerInfo[i]->stopWeek == 0)
+            printf("[%2d]    %s\n", p_playerInfo[i]->num,
+                    p_playerInfo[i]->name);
+}
+
+
+
+void printAllPlayerName(struct playerInfo *p_playerInfo[], int playerNum)
+{
+    int i;
+
+    for (i = 0; i < playerNum; ++i) {
+        if (p_playerInfo[i]->stopWeek != 0)
+            printf("%2d x", p_playerInfo[i]->stopWeek);
+        else
+            printf("    ");
         printf("[%2d]    %s\n", p_playerInfo[i]->num, p_playerInfo[i]->name);
+    }
 }
 
 
@@ -1050,8 +1088,10 @@ int readPlayerInfo(struct playerInfo *p_playerInfo[])
         while (fgetc(fp) != EOF) {
             p_playerInfo[++i] = 
                     (struct playerInfo *)malloc(sizeof(struct playerInfo));
-            fscanf(fp, "%d %s %c %c %d %d %d %lf %d %d",
+            fscanf(fp, "%d %d %d %s %c %c %d %d %d %lf %d %d",
                     &(p_playerInfo[i]->num),
+                    &(p_playerInfo[i]->stopWeek),
+                    &(p_playerInfo[i]->stopWeek),
                     p_playerInfo[i]->name,
                     &(p_playerInfo[i]->sex),
                     &(p_playerInfo[i]->level),
@@ -1107,8 +1147,10 @@ void writePlayerInfo(struct playerInfo *p_playerInfo[], int playerNum)
     fp = fopen(PLAYERS_SWP_FILE_PATH, "w");
     if (fp != NULL)
         for (i = 0; i < playerNum; ++i) {
-            fprintf(fp, " %d %s %c %c %d %d %d %lf %d %d",
+            fprintf(fp, " %d %d %d %s %c %c %d %d %d %lf %d %d",
                     p_playerInfo[i]->num,
+                    p_playerInfo[i]->startWeek,
+                    p_playerInfo[i]->stopWeek,
                     p_playerInfo[i]->name,
                     p_playerInfo[i]->sex,
                     p_playerInfo[i]->level,
