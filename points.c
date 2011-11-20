@@ -1245,23 +1245,3 @@ void swapTwoIntNum(int *i, int *j)
     *j = *i ^ *j;
     *i = *i ^ *j;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
