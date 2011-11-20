@@ -780,6 +780,12 @@ int addOneGameResultFromBallotFile(struct playerInfo *p_playerInfo[],
             }
         }
     }
+    else {
+        printf("\n不存在已保存的抽签结果\n\n");
+        printf("Enter键返回...");
+        while (getchar() != '\n')
+            ;
+    }
     fclose(fp_ballot);
 
     fp_weekDate = fopen(WEEK_DATE_FILE_PATH, "a");
