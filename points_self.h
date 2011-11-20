@@ -10,6 +10,7 @@
 #define GIVE_UP_BASE_POINT      -3
 #define LEVEL_NUM               4
 #define DEFAULT_LEVEL           'C'
+#define CUSTOM_SCORE            1
 /* user defined end */
 
 #define YES                     1
@@ -57,12 +58,12 @@ struct playerInfo {
 };
 
 struct calcRankStruct {
-    double pointXRate;
+    double score;
     struct playerInfo *p_playerInfo;
 };
 
 struct calcOneGameRankStruct {
-    double pointXRate;
+    double score;
     struct oneGameInfo *p_oneGameInfo;
 };
 
@@ -108,3 +109,5 @@ int currentInfoPointSortCmpFunction(const void *p1, const void *p2);
 int currentInfoRateSortCmpFunction(const void *p1, const void *p2);
 int isThisWeekValid(int thisWeek, int startWeek, int stopWeek);
 void swapTwoIntNum(int *i, int *j);
+double defaultScore(int point, double rate);
+double customScore(int point, double rate);

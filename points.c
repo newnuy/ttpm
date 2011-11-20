@@ -14,7 +14,7 @@ int startMenu(void)
 
     while (isQuit == NO) {
         system("clear");
-        printf("[a]  添删选手\n");
+        printf("[a]  增删选手\n");
         printf("[b]  赛前抽签\n");
         printf("[r]  录入成绩\n");
         printf("[e]  修改成绩\n");
@@ -538,15 +538,20 @@ int calcFromOneNewGameResult(struct playerInfo *p_playerInfo[],
         }
         /* for one game rank calculation */
         if (found != 0) {
-            calcOneGameRankStruct[k].pointXRate = (double)p_tmp->point *
+            calcOneGameRankStruct[k].score = (double)p_tmp->point *
                     ((double)p_tmp->winNum / (double)(p_tmp->winNum +
                     p_tmp->failNum));
             calcOneGameRankStruct[k].p_oneGameInfo = p_tmp;
             ++k;
         }
         /* for rank calculation */
-        calcRankStruct[m].pointXRate = (double)p_playerInfo[i]->point *
-                p_playerInfo[i]->rate;
+#if CUSTOM_SCORE
+        calcRankStruct[m].score = customScore(p_playerInfo[i]->point,
+                p_playerInfo[i]->rate);
+#else
+        calcRankStruct[m].score = defaultScore(p_playerInfo[i]->point,
+                p_playerInfo[i]->rate);
+#endif
         calcRankStruct[m].p_playerInfo = p_playerInfo[i];
         ++m;
     }
@@ -554,8 +559,8 @@ int calcFromOneNewGameResult(struct playerInfo *p_playerInfo[],
     qsort(calcOneGameRankStruct, k, sizeof(struct calcOneGameRankStruct),
             oneGameRankCmpFunction);
     for (l = 0; l < k; ++l)
-        if (l > 0 && calcOneGameRankStruct[l].pointXRate ==
-                calcOneGameRankStruct[l-1].pointXRate)
+        if (l > 0 && calcOneGameRankStruct[l].score ==
+                calcOneGameRankStruct[l-1].score)
             calcOneGameRankStruct[l].p_oneGameInfo->rank =
                     calcOneGameRankStruct[l-1].p_oneGameInfo->rank;
         else
@@ -564,8 +569,8 @@ int calcFromOneNewGameResult(struct playerInfo *p_playerInfo[],
     qsort(calcRankStruct, actualPlayerNum, sizeof(struct calcRankStruct),
             rankCmpFunction);
     for (l = 0; l < m; ++l)
-        if (l > 0 && calcRankStruct[l].pointXRate ==
-                calcRankStruct[l-1].pointXRate)
+        if (l > 0 && calcRankStruct[l].score ==
+                calcRankStruct[l-1].score)
             calcRankStruct[l].p_playerInfo->rank =
                     calcRankStruct[l-1].p_playerInfo->rank;
         else
@@ -954,7 +959,7 @@ void printPlayerInfoByType(struct playerInfo *p_playerInfo[], int playerNum,
         printf("   负");
         printf("  积分");
         printf("    胜率");
-        printf("  积分X胜率");
+        printf("    成绩");
         printf("  排名");
         printf("  级别");
         printf("\n\n");
@@ -973,7 +978,13 @@ void printPlayerInfoByType(struct playerInfo *p_playerInfo[], int playerNum,
                     printf("%5d", p_tmp[j]->failNum);
                     printf("%6d", p_tmp[j]->point);
                     printf("%7.1lf%%", p_tmp[j]->rate * 100);
-                    printf("%11.2lf", p_tmp[j]->point * p_tmp[j]->rate);
+#if CUSTOM_SCORE
+                    printf("%8.2lf", customScore(p_tmp[j]->point,
+                                p_tmp[j]->rate));
+#else
+                    printf("%8.2lf", defaultScore(p_tmp[j]->point,
+                                p_tmp[j]->rate));
+#endif
                     printf("%6d", p_tmp[j]->rank);
                     printf("%6c", p_tmp[j]->level);
                     printf("\n");
@@ -1170,38 +1181,45 @@ int getCurrentGameWeek(void)
 
 int rankCmpFunction(const void *p1, const void *p2)
 {
-    double p1_pointXRate = ((struct calcRankStruct *)p1)->pointXRate;
-    double p2_pointXRate = ((struct calcRankStruct *)p2)->pointXRate;
-    if (fabs(p1_pointXRate - p2_pointXRate) < 1e-5)
+    double p1_score = ((struct calcRankStruct *)p1)->score;
+    double p2_score = ((struct calcRankStruct *)p2)->score;
+    if (fabs(p1_score - p2_score) < 1e-5)
         return 0;
     else
-        return (p1_pointXRate < p2_pointXRate) ? 1 : -1;
+        return (p1_score < p2_score) ? 1 : -1;
 }
 
 
 
 int oneGameRankCmpFunction(const void *p1, const void *p2)
 {
-    double p1_pointXRate = ((struct calcOneGameRankStruct *)p1)->pointXRate;
-    double p2_pointXRate = ((struct calcOneGameRankStruct *)p2)->pointXRate;
-    if (fabs(p1_pointXRate - p2_pointXRate) < 1e-5)
+    double p1_score = ((struct calcOneGameRankStruct *)p1)->score;
+    double p2_score = ((struct calcOneGameRankStruct *)p2)->score;
+    if (fabs(p1_score - p2_score) < 1e-5)
         return 0;
     else
-        return (p1_pointXRate < p2_pointXRate) ? 1 : -1;
+        return (p1_score < p2_score) ? 1 : -1;
 }
 
 
 
 int currentInfoDefaultSortCmpFunction(const void *p1, const void *p2)
 {
-    double p1_pointXRate = (double)(*(struct playerInfo **)p1)->point *
-            (*(struct playerInfo **)p1)->rate;
-    double p2_pointXRate = (double)(*(struct playerInfo **)p2)->point *
-            (*(struct playerInfo **)p2)->rate;
-    if (fabs(p1_pointXRate - p2_pointXRate) < 1e-5)
+#if CUSTOM_SCORE
+    double p1_score = customScore((*(struct playerInfo **)p1)->point,
+            (*(struct playerInfo **)p1)->rate);
+    double p2_score = customScore((*(struct playerInfo **)p2)->point,
+            (*(struct playerInfo **)p2)->rate);
+#else
+    double p1_score = defaultScore((*(struct playerInfo **)p1)->point,
+            (*(struct playerInfo **)p1)->rate);
+    double p2_score = defaultScore((*(struct playerInfo **)p2)->point,
+            (*(struct playerInfo **)p2)->rate);
+#endif
+    if (fabs(p1_score - p2_score) < 1e-5)
         return 0;
     else
-        return (p1_pointXRate < p2_pointXRate) ? 1 : -1;
+        return (p1_score < p2_score) ? 1 : -1;
 }
 
 
@@ -1244,4 +1262,18 @@ void swapTwoIntNum(int *i, int *j)
     *i = *i ^ *j;
     *j = *i ^ *j;
     *i = *i ^ *j;
+}
+
+
+
+double defaultScore(int point, double rate)
+{
+    return point * rate;
+}
+
+
+
+double customScore(int point, double rate)
+{
+    return point * sqrt(rate);
 }
