@@ -14,7 +14,7 @@ int startMenu(void)
 
     while (isQuit == NO) {
         system("clear");
-        printf("[a]  添加选手\n");
+        printf("[a]  添删选手\n");
         printf("[b]  赛前抽签\n");
         printf("[r]  录入成绩\n");
         printf("[e]  修改成绩\n");
