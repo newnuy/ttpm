@@ -98,12 +98,16 @@ void printPlayerInfoByType(struct playerInfo *p_playerInfo[], int playerNum,
 int readPlayerInfo(struct playerInfo *p_playerInfo[]);
 void writePlayerInfo(struct playerInfo *p_playerInfo[], int playerNum);
 void freePlayerInfoStruct(struct playerInfo *p_playerInfo[], int playerNum);
+int createActualPlayerInfoPointArray(struct playerInfo *p_playerInfo[],
+        int playerNum, struct playerInfo *p_actualPlayerInfo[],
+        int firstWeek, int lastWeek);
 int getCurrentGameWeek(void);
 int rankCmpFunction(const void *p1, const void *p2);
 int oneGameRankCmpFunction(const void *p1, const void *p2);
 int currentInfoDefaultSortCmpFunction(const void *p1, const void *p2);
 int currentInfoPointSortCmpFunction(const void *p1, const void *p2);
 int currentInfoRateSortCmpFunction(const void *p1, const void *p2);
+int isThisWeekValid(int thisWeek, int startWeek, int stopWeek);
 void swapTwoIntNum(int *i, int *j);
 
 
@@ -168,6 +172,9 @@ int addPlayer(struct playerInfo* p_playerInfo[], int *p_playerNum)
     struct playerInfo *p_tmp;
     int addPlayerSelection;
     int playerNum = *p_playerNum;
+    int deletePlayerNum;
+    int i;
+    char c;
 
     /* print players */
     printf("\n当前参赛选手:\n");
@@ -212,10 +219,31 @@ int addPlayer(struct playerInfo* p_playerInfo[], int *p_playerNum)
             p_tmp->rank = playerNum + 1;
             p_tmp->weekNum = 0;
             p_tmp->p_oneGameInfo = NULL;
-            p_playerInfo[playerNum++] = p_tmp;
+            p_playerInfo[playerNum] = p_tmp;
             ++(*p_playerNum);
             break;
         case 'd':
+            printf("序号: ");
+            scanf("%d", &deletePlayerNum);
+            while (getchar() != '\n')
+                ;
+            for (i = 0; i < playerNum; ++i)
+                if (p_playerInfo[i]->num == deletePlayerNum)
+                    break;
+            if (i == playerNum) {
+                printf("未找到序号为 %d 的选手\n", deletePlayerNum);
+                printf("Enter键返回...");
+                while (getchar() != '\n')
+                    ;
+            }
+            else {
+                printf("确定要删除序号为 %d 的选手y/[n]: ", deletePlayerNum);
+                scanf("%c", &c);
+                while (getchar() != '\n')
+                    ;
+                if (c == 'y' || c == 'Y')
+                    p_playerInfo[i]->stopWeek = getCurrentGameWeek();
+            }
             break;
         case 'q':
         default:
@@ -541,9 +569,8 @@ int calcFromOneNewGameResult(struct playerInfo *p_playerInfo[],
 
     thisWeek = getCurrentGameWeek();
     for (i = 0; i < playerNum; ++i) {
-        if (thisWeek <= p_playerInfo[i]->startWeek ||
-                (p_playerInfo[i]->stopWeek != 0 &&
-                thisWeek > p_playerInfo[i]->stopWeek))
+        if (isThisWeekValid(thisWeek, p_playerInfo[i]->startWeek,
+                    p_playerInfo[i]->stopWeek) == 0)
             continue;
         ++actualPlayerNum;
         found = 0;
@@ -653,8 +680,8 @@ int calcFromOneNewGameResult(struct playerInfo *p_playerInfo[],
         else
             calcRankStruct[l].p_playerInfo->rank = l+1;
     for (i = 0; i < playerNum; ++i)
-        if (p_playerInfo[i]->stopWeek != 0 &&
-                thisWeek > p_playerInfo[i]->stopWeek)
+        if (isThisWeekValid(thisWeek, p_playerInfo[i]->startWeek,
+                    p_playerInfo[i]->stopWeek) == 0)
             p_playerInfo[i]->rank = -1;
 
     /* calculate level */
@@ -957,11 +984,10 @@ void printPlayerInfoByType(struct playerInfo *p_playerInfo[], int playerNum,
 {
     struct playerInfo *p_tmp[PLAYERS_NUM_MAX];
     char sortSelection;
-    int i;
+    int firstWeek;
+    int lastWeek;
+    int actualPlayerNum = 0;
     int j;
-
-    for (i = 0; i < playerNum; ++i)
-        p_tmp[i] = p_playerInfo[i];
 
     if (type == PRINT_TYPE_PLAYER) {
     }
@@ -993,17 +1019,24 @@ void printPlayerInfoByType(struct playerInfo *p_playerInfo[], int playerNum,
         /* sort */
         switch (type) {
             case PRINT_TYPE_CURRENT:
+                firstWeek = getCurrentGameWeek();
+                lastWeek = firstWeek;
+                actualPlayerNum = createActualPlayerInfoPointArray(
+                        p_playerInfo, playerNum, p_tmp, firstWeek, lastWeek);
                 switch (sortSelection) {
                     case 'a':
-                        qsort(p_tmp, playerNum, sizeof(struct playerInfo *),
+                        qsort(p_tmp, actualPlayerNum,
+                                sizeof(struct playerInfo *),
                                 currentInfoDefaultSortCmpFunction);
                         break;
                     case 'b':
-                        qsort(p_tmp, playerNum, sizeof(struct playerInfo *),
+                        qsort(p_tmp, actualPlayerNum,
+                                sizeof(struct playerInfo *),
                                 currentInfoPointSortCmpFunction);
                         break;
                     case 'c':
-                        qsort(p_tmp, playerNum, sizeof(struct playerInfo *),
+                        qsort(p_tmp, actualPlayerNum,
+                                sizeof(struct playerInfo *),
                                 currentInfoRateSortCmpFunction);
                         break;
                     default:
@@ -1038,7 +1071,7 @@ void printPlayerInfoByType(struct playerInfo *p_playerInfo[], int playerNum,
         /* print table */
         switch (type) {
             case PRINT_TYPE_CURRENT:
-                for (j = 0; j < playerNum; ++j) {
+                for (j = 0; j < actualPlayerNum; ++j) {
                     printf("[%2d]", p_tmp[j]->num);
                     printf("  %s", p_tmp[j]->name);
                     if (p_tmp[j]->sex == 'm' || p_tmp[j]->sex == 'M')
@@ -1207,6 +1240,24 @@ void freePlayerInfoStruct(struct playerInfo *p_playerInfo[], int playerNum)
 
 
 
+int createActualPlayerInfoPointArray(struct playerInfo *p_playerInfo[],
+        int playerNum, struct playerInfo *p_actualPlayerInfo[],
+        int firstWeek, int lastWeek)
+{
+    int i;
+    int j;
+
+    for (i = 0, j = 0; i < playerNum; ++i) {
+        if (isThisWeekValid(lastWeek, p_playerInfo[i]->startWeek,
+                p_playerInfo[i]->stopWeek) != 0)
+            p_actualPlayerInfo[j++] = p_playerInfo[i];
+    }
+
+    return j;
+}
+
+
+
 int getCurrentGameWeek(void)
 {
     FILE *fp;
@@ -1285,8 +1336,20 @@ int currentInfoRateSortCmpFunction(const void *p1, const void *p2)
 
 
 
+int isThisWeekValid(int thisWeek, int startWeek, int stopWeek)
+{
+    if (thisWeek <= startWeek || (stopWeek != 0 && thisWeek > stopWeek))
+        return 0;
+    else
+        return 1;
+}
+
+
+
 void swapTwoIntNum(int *i, int *j)
 {
+    if (*i == *j)
+        return;
     *i = *i ^ *j;
     *j = *i ^ *j;
     *i = *i ^ *j;
