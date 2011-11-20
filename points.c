@@ -84,11 +84,6 @@ int addPlayer(struct playerInfo* p_playerInfo[], int *p_playerNum)
     switch (addPlayerSelection) {
         case 'a':
             p_tmp = (struct playerInfo *)malloc(sizeof(struct playerInfo));
-            /* read num */
-            printf("序号: ");
-            scanf("%d", &(p_tmp->num));
-            while (getchar() != '\n')
-                ;
             /* read name */
             printf("姓名: ");
             scanf("%s", p_tmp->name);
@@ -100,6 +95,7 @@ int addPlayer(struct playerInfo* p_playerInfo[], int *p_playerNum)
             while (getchar() != '\n')
                 ;
             /* init the new player */
+            p_tmp->num = playerNum + 1;
             p_tmp->startWeek = getCurrentGameWeek();
             p_tmp->stopWeek = 0;
             p_tmp->level = DEFAULT_LEVEL;
