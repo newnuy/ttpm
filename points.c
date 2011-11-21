@@ -212,11 +212,11 @@ int ballot(struct playerInfo *p_playerInfo[], int playerNum)
     }
 
     /* more random sort */
+    srand(time(NULL));
     for (l = 0; l < RANDOM_LOOP * lines; ++l) {
         i = rand() % lines;
         j = rand() % lines;
-        if (i != j)
-            swapTwoIntNum(p_ballotArray + i*cols, p_ballotArray + j*cols);
+        swapTwoIntNum(p_ballotArray + i*cols, p_ballotArray + j*cols);
     }
 
     /* ballot */
