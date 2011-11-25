@@ -1,10 +1,13 @@
 CC    = gcc -g -O
 RM    = rm -rf
+MV    = mv
 STRIP = strip
 
 
-exefile = ttpm
-objects = ttpm.o points.o ver.o
+exefile  = ttpm
+objects  = ttpm.o points.o ver.o
+dev_dir  = files
+user_dir = files_backup
 
 
 $(exefile): $(objects)
@@ -15,6 +18,8 @@ $(exefile): $(objects)
 
 release:
 	$(STRIP) $(exefile)
+	$(RM) $(dev_dir)
+	$(MV) $(user_dir) $(dev_dir)
 
 .PHONY: clean
 clean:
