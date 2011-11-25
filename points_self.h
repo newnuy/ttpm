@@ -12,6 +12,7 @@
 #define LEVEL_NUM               4
 #define DEFAULT_LEVEL           'C'
 #define CUSTOM_SCORE            1
+#define CUSTOM_BALLOT_LEVEL     1
 /* user defined end */
 
 #define YES                     1
@@ -49,11 +50,13 @@ struct playerInfo {
     char name[NAME_LEN_MAX];
     char sex;
     char level;
+    char iceLevel;
     int winNum;
     int failNum;
     int point;
     double rate;
     int rank;
+    int lastWeek;
     int weekNum;
     struct oneGameInfo *p_oneGameInfo;
 };
@@ -112,3 +115,4 @@ int isThisWeekValid(int thisWeek, int startWeek, int stopWeek);
 void swapTwoIntNum(int *i, int *j);
 double defaultScore(int point, double rate);
 double customScore(int point, double rate);
+char customPrintBallotLevel(struct playerInfo *p_playerInfo[], int index);
