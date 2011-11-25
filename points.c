@@ -330,6 +330,10 @@ int recordOneGameResult(struct playerInfo *p_playerInfo[], int playerNum)
         printf("输入有误\n\n");
         return -2;
     }
+    if (resultNum == -3) {
+        printf("不存在已保存的抽签结果\n\n");
+        return -3;
+    }
     calcFromOneNewGameResult(p_playerInfo, playerNum, oneGameResult, resultNum);
     printAllPlayerMainInfo(p_playerInfo, playerNum);
 
@@ -720,6 +724,15 @@ int addOneGameResultFromBallotFile(struct playerInfo *p_playerInfo[],
     int i;
     int j;
 
+    fp_ballot = fopen(BALLOT_FILE_PATH, "r");
+    if (fp_ballot == NULL) {
+        printf("\n不存在已保存的抽签结果\n\n");
+        printf("Enter键返回...");
+        while (getchar() != '\n')
+            ;
+        return -3;
+    }
+
     /* get xxxx-xx-xx */
     printf("年: ");
     scanf("%d", &year);
@@ -734,7 +747,6 @@ int addOneGameResultFromBallotFile(struct playerInfo *p_playerInfo[],
     while (getchar() != '\n')
         ;
 
-    fp_ballot = fopen(BALLOT_FILE_PATH, "r");
     if (fp_ballot != NULL) {
         fscanf(fp_ballot, "%s", text);
         printf("现在使用标识字串为 %s 的抽签结果...\n", text);
@@ -787,12 +799,6 @@ int addOneGameResultFromBallotFile(struct playerInfo *p_playerInfo[],
                     break;
             }
         }
-    }
-    else {
-        printf("\n不存在已保存的抽签结果\n\n");
-        printf("Enter键返回...");
-        while (getchar() != '\n')
-            ;
     }
     fclose(fp_ballot);
 
