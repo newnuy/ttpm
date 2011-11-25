@@ -1,0 +1,7 @@
+*.[oa]
+files*/
+!/files_backup/
+ttpm
+version
+*~
+*.swp
