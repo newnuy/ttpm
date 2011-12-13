@@ -335,7 +335,6 @@ int recordOneGameResult(struct playerInfo *p_playerInfo[], int playerNum)
         return -3;
     }
     calcFromOneNewGameResult(p_playerInfo, playerNum, oneGameResult, resultNum);
-    printAllPlayerMainInfo(p_playerInfo, playerNum);
 
     return 0;
 }
@@ -349,8 +348,7 @@ int printInfo(struct playerInfo *p_playerInfo[], int playerNum)
     printf("[c]  最新信息\n");
     printf("[n]  最近单周\n");
     printf("[w]  单周信息\n");
-    printf("[m]  单月信息\n");
-    printf("[s]  单季信息\n");
+    printf("[s]  多周信息\n");
     printf("[p]  单名选手\n");
     printf("[q]  离    开\n");
     printf("你的选择: ");
@@ -363,12 +361,15 @@ int printInfo(struct playerInfo *p_playerInfo[], int playerNum)
             printPlayerInfoByType(p_playerInfo, playerNum, PRINT_TYPE_CURRENT);
             break;
         case 'n':
+            printPlayerInfoByType(p_playerInfo, playerNum,
+                    PRINT_TYPE_CURRENT_WEEK);
             break;
         case 'w':
-            break;
-        case 'm':
+            printPlayerInfoByType(p_playerInfo, playerNum, PRINT_TYPE_WEEK);
             break;
         case 's':
+            printPlayerInfoByType(p_playerInfo, playerNum,
+                    PRINT_TYPE_SOME_WEEKS);
             break;
         case 'p':
             break;
@@ -580,14 +581,15 @@ int calcFromOneNewGameResult(struct playerInfo *p_playerInfo[],
     qsort(calcRankStruct, actualPlayerNum, sizeof(struct calcRankStruct),
             rankCmpFunction);
     for (l = 0; l < m; ++l)
-        if (l > 0 && calcRankStruct[l].score == calcRankStruct[l-1].score)
+        if (l > 0 && isTwoDoubleNumEqual(calcRankStruct[l].score,
+                calcRankStruct[l-1].score) == 1)
             calcRankStruct[l].p_playerInfo->rank =
                     calcRankStruct[l-1].p_playerInfo->rank;
         else
-            calcRankStruct[l].p_playerInfo->rank = l+1;
+            calcRankStruct[l].p_playerInfo->rank = l + 1;
     for (i = 0; i < playerNum; ++i)
         if (isThisWeekValid(thisWeek, p_playerInfo[i]->startWeek,
-                    p_playerInfo[i]->stopWeek) == 0)
+                p_playerInfo[i]->stopWeek) == 0)
             p_playerInfo[i]->rank = -1;
 
     /* calculate level */
@@ -613,8 +615,6 @@ int calcFromOneNewGameResult(struct playerInfo *p_playerInfo[],
 int addOneGameResult(struct playerInfo *p_playerInfo[], int playerNum,
         int oneGameResult[][3])
 {
-    FILE *fp;
-    FILE *fp_weekDate;
     char c;
     int week;
     int year;
@@ -682,24 +682,11 @@ int addOneGameResult(struct playerInfo *p_playerInfo[], int playerNum,
     }
     resultNum = i+1;
 
-    fp_weekDate = fopen(WEEK_DATE_FILE_PATH, "a");
-    fp = fopen(DATA_FILE_PATH, "a");
-
-    /* write week, xxxx-xx-xx */
     week = getCurrentGameWeek() + 1;
-    if (fp_weekDate != NULL)
-        fprintf(fp_weekDate, " %d %d %d %d \n", week, year, month, day);
+    /* write week, xxxx-xx-xx */
+    writeWeekDate(week, year, month, day);
     /* write result */
-    if (fp != NULL) {
-        fprintf(fp, " %d %d", week, resultNum);
-        for (i = 0; i < resultNum; ++i)
-            fprintf(fp, "  %d %d %d", oneGameResult[i][0],
-                    oneGameResult[i][1], oneGameResult[i][2]);
-        fprintf(fp, "\n");
-    }
-
-    fclose(fp_weekDate);
-    fclose(fp);
+    writeBallotResult(oneGameResult, resultNum, week);
 
     return resultNum;
 }
@@ -709,8 +696,6 @@ int addOneGameResult(struct playerInfo *p_playerInfo[], int playerNum,
 int addOneGameResultFromBallotFile(struct playerInfo *p_playerInfo[],
         int playerNum, int oneGameResult[][3])
 {
-    FILE *fp;
-    FILE *fp_weekDate;
     FILE *fp_ballot;
     char text[TEXT_LEN_MAX];
     int resultNum;
@@ -802,32 +787,13 @@ int addOneGameResultFromBallotFile(struct playerInfo *p_playerInfo[],
     }
     fclose(fp_ballot);
 
-    fp_weekDate = fopen(WEEK_DATE_FILE_PATH, "a");
-    fp = fopen(DATA_FILE_PATH, "a");
-
-    /* write week, xxxx-xx-xx */
     week = getCurrentGameWeek() + 1;
-    if (fp_weekDate != NULL)
-        fprintf(fp_weekDate, " %d %d %d %d \n", week, year, month, day);
+    /* write week, xxxx-xx-xx */
+    writeWeekDate(week, year, month, day);
     /* write result */
-    if (fp != NULL) {
-        fprintf(fp, " %d %d", week, resultNum);
-        for (i = 0; i < resultNum; ++i)
-            fprintf(fp, "  %d %d %d", oneGameResult[i][0],
-                    oneGameResult[i][1], oneGameResult[i][2]);
-        fprintf(fp, "\n");
-    }
-
-    fclose(fp_weekDate);
-    fclose(fp);
+    writeBallotResult(oneGameResult, resultNum, week);
 
     return resultNum;
-}
-
-
-
-int editOneGameResult(void)
-{
 }
 
 
@@ -859,65 +825,46 @@ void printAllPlayerName(struct playerInfo *p_playerInfo[], int playerNum)
 
 
 
-void printAllPlayerMainInfo(struct playerInfo *p_playerInfo[], int playerNum)
-{
-    int i;
-
-    printf("序号");
-    printf("    姓名");
-    printf("  性别");
-    printf("   胜");
-    printf("   负");
-    printf("  积分");
-    printf("    胜率");
-    printf("  积分X胜率");
-    printf("  排名");
-    printf("  级别");
-    printf("\n\n");
-
-    for (i = 0; i < playerNum; ++i) {
-        printf("[%2d]", p_playerInfo[i]->num);
-        printf("  %s", p_playerInfo[i]->name);
-        if (p_playerInfo[i]->sex == 'm' || p_playerInfo[i]->sex == 'M')
-            printf("    男");
-        else
-            printf("    女");
-        printf("%5d", p_playerInfo[i]->winNum);
-        printf("%5d", p_playerInfo[i]->failNum);
-        printf("%6d", p_playerInfo[i]->point);
-        printf("%7.1lf%%", p_playerInfo[i]->rate * 100);
-        printf("%11.2lf", p_playerInfo[i]->point * p_playerInfo[i]->rate);
-        printf("%6d", p_playerInfo[i]->rank);
-        printf("%6c", p_playerInfo[i]->level);
-        printf("\n");
-    }
-}
-
-
-
 void printPlayerInfoByType(struct playerInfo *p_playerInfo[], int playerNum,
         int type)
 {
-    struct playerInfo *p_tmp[PLAYERS_NUM_MAX];
+    struct weekInfoStruct *p_tmp[PLAYERS_NUM_MAX];
     char sortSelection;
     int firstWeek;
     int lastWeek;
     int actualPlayerNum = 0;
-    int j;
 
     if (type == PRINT_TYPE_PLAYER) {
     }
     else {
-        /* which week, month, or season */
+        /* get firstWeek and lastWeek */
         switch (type) {
+            case PRINT_TYPE_CURRENT:
+                firstWeek = 1;
+                lastWeek = getCurrentGameWeek();
+                break;
+            case PRINT_TYPE_CURRENT_WEEK:
+                lastWeek = getCurrentGameWeek();
+                firstWeek = lastWeek;
+                break;
             case PRINT_TYPE_WEEK:
-                printf("[a]  周次\n");
+                printWeekDate();
+                printf("输入周次: ");
+                scanf("%d", &lastWeek);
+                while (getchar() != '\n')
+                    ;
+                firstWeek = lastWeek;
                 break;
-            case PRINT_TYPE_MONTH:
-                printf("[b]  月份\n");
-                break;
-            case PRINT_TYPE_SEASON:
-                printf("[c]  季度\n");
+            case PRINT_TYPE_SOME_WEEKS:
+                printWeekDate();
+                printf("起始周次: ");
+                scanf("%d", &firstWeek);
+                while (getchar() != '\n')
+                    ;
+                printf("终了周次: ");
+                scanf("%d", &lastWeek);
+                while (getchar() != '\n')
+                    ;
                 break;
             default:
                 break;
@@ -935,88 +882,61 @@ void printPlayerInfoByType(struct playerInfo *p_playerInfo[], int playerNum,
         /* sort */
         switch (type) {
             case PRINT_TYPE_CURRENT:
-                firstWeek = getCurrentGameWeek();
-                lastWeek = firstWeek;
-                actualPlayerNum = createActualPlayerInfoPointArray(
-                        p_playerInfo, playerNum, p_tmp, firstWeek, lastWeek);
+                actualPlayerNum = createWeeksPlayerInfoStruct(p_playerInfo,
+                        playerNum, p_tmp, firstWeek, lastWeek);
                 switch (sortSelection) {
                     case 'a':
-                        qsort(p_tmp, actualPlayerNum,
-                                sizeof(struct playerInfo *),
-                                currentInfoDefaultSortCmpFunction);
                         break;
                     case 'b':
                         qsort(p_tmp, actualPlayerNum,
-                                sizeof(struct playerInfo *),
-                                currentInfoPointSortCmpFunction);
+                                sizeof(struct weekInfoStruct *),
+                                weekInfoPointSortCmpFunction);
                         break;
                     case 'c':
                         qsort(p_tmp, actualPlayerNum,
-                                sizeof(struct playerInfo *),
-                                currentInfoRateSortCmpFunction);
+                                sizeof(struct weekInfoStruct *),
+                                weekInfoRateSortCmpFunction);
                         break;
                     default:
                         break;
                 }
                 break;
             case PRINT_TYPE_CURRENT_WEEK:
-                break;
             case PRINT_TYPE_WEEK:
-                break;
-            case PRINT_TYPE_MONTH:
-                break;
-            case PRINT_TYPE_SEASON:
+            case PRINT_TYPE_SOME_WEEKS:
+                actualPlayerNum = createWeeksPlayerInfoStruct(p_playerInfo,
+                        playerNum, p_tmp, firstWeek, lastWeek);
+                switch (sortSelection) {
+                    case 'a':
+                        break;
+                    case 'b':
+                        qsort(p_tmp, actualPlayerNum,
+                                sizeof(struct weekInfoStruct *),
+                                weekInfoPointSortCmpFunction);
+                        break;
+                    case 'c':
+                        qsort(p_tmp, actualPlayerNum,
+                                sizeof(struct weekInfoStruct *),
+                                weekInfoRateSortCmpFunction);
+                        break;
+                    default:
+                        break;
+                }
                 break;
             default:
                 break;
         }
 
         /* print table head */
-        printf("序号");
-        printf("    姓名");
-        printf("  性别");
-        printf("   胜");
-        printf("   负");
-        printf("  积分");
-        printf("    胜率");
-        printf("    成绩");
-        printf("  排名");
-        printf("  级别");
-        printf("\n\n");
+        printPlayerInfoTableHeadByType(type);
 
         /* print table */
         switch (type) {
             case PRINT_TYPE_CURRENT:
-                for (j = 0; j < actualPlayerNum; ++j) {
-                    printf("[%2d]", p_tmp[j]->num);
-                    printf("  %s", p_tmp[j]->name);
-                    if (p_tmp[j]->sex == 'm' || p_tmp[j]->sex == 'M')
-                        printf("    男");
-                    else
-                        printf("    女");
-                    printf("%5d", p_tmp[j]->winNum);
-                    printf("%5d", p_tmp[j]->failNum);
-                    printf("%6d", p_tmp[j]->point);
-                    printf("%7.1lf%%", p_tmp[j]->rate * 100);
-#if CUSTOM_SCORE
-                    printf("%8.2lf", customScore(p_tmp[j]->point,
-                                p_tmp[j]->rate));
-#else
-                    printf("%8.2lf", defaultScore(p_tmp[j]->point,
-                                p_tmp[j]->rate));
-#endif
-                    printf("%6d", p_tmp[j]->rank);
-                    printf("%6c", p_tmp[j]->level);
-                    printf("\n");
-                }
-                break;
             case PRINT_TYPE_CURRENT_WEEK:
-                break;
             case PRINT_TYPE_WEEK:
-                break;
-            case PRINT_TYPE_MONTH:
-                break;
-            case PRINT_TYPE_SEASON:
+            case PRINT_TYPE_SOME_WEEKS:
+                printPlayerInfoTableBodyByType(p_tmp, actualPlayerNum, type);
                 break;
             default:
                 break;
@@ -1027,6 +947,60 @@ void printPlayerInfoByType(struct playerInfo *p_playerInfo[], int playerNum,
     printf("Enter键返回...");
     while (getchar() != '\n')
         ;
+
+    if (actualPlayerNum != 0)
+        freeWeeksPlayerInfoStruct(p_tmp, actualPlayerNum);
+}
+
+
+
+void printPlayerInfoTableHeadByType(int type)
+{
+    printf("序号");
+    printf("    姓名");
+    printf("  性别");
+    printf("   胜");
+    printf("   负");
+    printf("  积分");
+    printf("    胜率");
+    printf("    成绩");
+    if (type == PRINT_TYPE_CURRENT || type == PRINT_TYPE_CURRENT_WEEK ||
+            type == PRINT_TYPE_WEEK || type == PRINT_TYPE_SOME_WEEKS)
+        printf("  排名");
+    if (type == PRINT_TYPE_CURRENT)
+        printf("  级别");
+    printf("\n");
+}
+
+
+
+void printPlayerInfoTableBodyByType(struct weekInfoStruct *p_weekInfo[],
+        int actualPlayerNum, int type)
+{
+    int i;
+
+    for (i = 0; i < actualPlayerNum; ++i) {
+        printf("[%2d]", p_weekInfo[i]->p_playerInfo->num);
+        printf("  %s", p_weekInfo[i]->p_playerInfo->name);
+        if (p_weekInfo[i]->p_playerInfo->sex == 'm' ||
+                p_weekInfo[i]->p_playerInfo->sex == 'M')
+            printf("    男");
+        else
+            printf("    女");
+        printf("%5d", p_weekInfo[i]->winNum);
+        printf("%5d", p_weekInfo[i]->failNum);
+        printf("%6d", p_weekInfo[i]->point);
+        printf("%7.1lf%%", p_weekInfo[i]->rate * 100);
+        printf("%8.2lf", p_weekInfo[i]->score);
+        if (type == PRINT_TYPE_CURRENT_WEEK || type == PRINT_TYPE_WEEK ||
+                type == PRINT_TYPE_SOME_WEEKS)
+            printf("%6d", p_weekInfo[i]->rank);
+        else if (type == PRINT_TYPE_CURRENT)
+            printf("%6d", p_weekInfo[i]->p_playerInfo->rank);
+        if (type == PRINT_TYPE_CURRENT)
+            printf("%6c", p_weekInfo[i]->p_playerInfo->level);
+        printf("\n");
+    }
 }
 
 
@@ -1166,48 +1140,187 @@ void freePlayerInfoStruct(struct playerInfo *p_playerInfo[], int playerNum)
 
 
 
-int createActualPlayerInfoPointArray(struct playerInfo *p_playerInfo[],
-        int playerNum, struct playerInfo *p_actualPlayerInfo[],
+int createWeeksPlayerInfoStruct(struct playerInfo *p_playerInfo[],
+        int playerNum, struct weekInfoStruct *p_weekInfo[],
         int firstWeek, int lastWeek)
 {
+    struct oneGameInfo *p_tmp;
     int i;
     int j;
+    int found;
+    int winNum;
+    int failNum;
+    int point;
 
     for (i = 0, j = 0; i < playerNum; ++i) {
+        found = 0;
+        winNum = 0;
+        failNum = 0;
+        point = 0;
         if (isThisWeekValid(lastWeek, p_playerInfo[i]->startWeek,
-                p_playerInfo[i]->stopWeek) != 0)
-            p_actualPlayerInfo[j++] = p_playerInfo[i];
+                p_playerInfo[i]->stopWeek) != 0) {
+            p_tmp = p_playerInfo[i]->p_oneGameInfo;
+            while (p_tmp != NULL) {
+                if (p_tmp->week >= firstWeek && p_tmp->week <= lastWeek) {
+                    if (found == 0) {
+                        p_weekInfo[j] = (struct weekInfoStruct *)
+                                malloc(sizeof(struct weekInfoStruct));
+                        p_weekInfo[j]->p_playerInfo = p_playerInfo[i];
+                        p_weekInfo[j]->p_oneGameInfoFirst = p_tmp;
+                    }
+                    p_weekInfo[j]->p_oneGameInfoLast = p_tmp;
+                    /* add winNum and failNum */
+                    winNum += p_tmp->winNum;
+                    failNum += p_tmp->failNum;
+                    /* add point */
+                    point += p_tmp->point;
+                    ++found;
+                }
+                p_tmp = p_tmp->next;
+            }
+        }
+        if (found != 0) {
+            /* calculate rate */
+            if (winNum + failNum == 0)
+                p_weekInfo[j]->rate = 0;
+            else
+                p_weekInfo[j]->rate =
+                        (double)winNum / (winNum + failNum);
+            /* get winNum and failNum */
+            p_weekInfo[j]->winNum = winNum;
+            p_weekInfo[j]->failNum = failNum;
+            /* get point */
+            p_weekInfo[j]->point = point;
+            /* get score */
+#if CUSTOM_SCORE
+            p_weekInfo[j]->score = customScore(point, p_weekInfo[j]->rate);
+#else
+            p_weekInfo[j]->score = defaultScore(point, p_weekInfo[j]->rate);
+#endif
+            ++j;
+        }
     }
+
+    /* calculate rank */
+    qsort(p_weekInfo, j, sizeof(struct weekInfoStruct *),
+            weekInfoDefaultSortCmpFunction);
+    for (i = 0; i < j; ++i)
+        if (i > 0 && isTwoDoubleNumEqual(p_weekInfo[i]->score,
+                p_weekInfo[i-1]->score) == 1)
+            p_weekInfo[i]->rank = p_weekInfo[i-1]->rank;
+        else
+            p_weekInfo[i]->rank = i + 1;
 
     return j;
 }
 
 
 
+void freeWeeksPlayerInfoStruct(struct weekInfoStruct *p_weekInfo[],
+        int actualPlayerNum)
+{
+    int i;
+
+    for (i = 0; i < actualPlayerNum; ++i)
+        free(p_weekInfo[i]);
+}
+
+
+
 int getCurrentGameWeek(void)
 {
-    FILE *fp;
+    FILE *fp_weekDate;
     int week = 0;
 
-    fp = fopen(WEEK_DATE_FILE_PATH, "r");
-    if (fp != NULL)
-        while (fgetc(fp) != EOF) {
-            fscanf(fp, "%d", &week);
-            while (fgetc(fp) != '\n')
+    fp_weekDate = fopen(WEEK_DATE_FILE_PATH, "r");
+    if (fp_weekDate != NULL)
+        while (fgetc(fp_weekDate) != EOF) {
+            fscanf(fp_weekDate, "%d", &week);
+            while (fgetc(fp_weekDate) != '\n')
                 ;
         }
-    fclose(fp);
+    fclose(fp_weekDate);
 
     return week;
 }
 
 
 
+int readWeekDate(int weekDate[][4])
+{
+    FILE *fp_weekDate;
+    int i = 0;
+
+    fp_weekDate = fopen(WEEK_DATE_FILE_PATH, "r");
+    if (fp_weekDate != NULL)
+        while (fgetc(fp_weekDate) != EOF) {
+            fscanf(fp_weekDate, "%d %d %d %d", &weekDate[i][0],
+                    &weekDate[i][1], &weekDate[i][2], &weekDate[i][3]);
+            ++i;
+        }
+    fclose(fp_weekDate);
+
+    return getCurrentGameWeek();
+}
+
+
+
+void writeWeekDate(int week, int year, int month, int day)
+{
+    FILE *fp_weekDate;
+
+    fp_weekDate = fopen(WEEK_DATE_FILE_PATH, "a");
+    if (fp_weekDate != NULL)
+        fprintf(fp_weekDate, " %d %d %d %d \n", week, year, month, day);
+    fclose(fp_weekDate);
+}
+
+
+
+void printWeekDate(void)
+{
+    int weekDate[WEEK_NUM_MAX][4];
+    int weekNum;
+    int i;
+
+    weekNum = readWeekDate(weekDate);
+    printf("已录入的比赛周次: \n");
+    for (i = 0; i < weekNum; ++i) {
+        printf("%2d  %4d-%2d-%2d      ", weekDate[i][0], weekDate[i][1],
+                weekDate[i][2], weekDate[i][3]);
+        if (i % 4 == 3)
+            printf("\n");
+    }
+    if (weekNum % 4 != 0)
+        printf("\n");
+}
+
+
+
+void writeBallotResult(int oneGameResult[][3], int resultNum, int week)
+{
+    FILE *fp;
+    int i;
+
+    fp = fopen(DATA_FILE_PATH, "a");
+    if (fp != NULL) {
+        fprintf(fp, " %d %d", week, resultNum);
+        for (i = 0; i < resultNum; ++i)
+            fprintf(fp, "  %d %d %d", oneGameResult[i][0],
+                    oneGameResult[i][1], oneGameResult[i][2]);
+        fprintf(fp, "\n");
+    }
+
+    fclose(fp);
+}
+
+
+
 int rankCmpFunction(const void *p1, const void *p2)
 {
-    double p1_score = ((struct calcRankStruct *)p1)->score;
-    double p2_score = ((struct calcRankStruct *)p2)->score;
-    if (fabs(p1_score - p2_score) < 1e-5)
+    double p1_score = (*(struct calcRankStruct **)p1)->score;
+    double p2_score = (*(struct calcRankStruct **)p2)->score;
+    if (isTwoDoubleNumEqual(p1_score, p2_score) == 1)
         return 0;
     else
         return (p1_score < p2_score) ? 1 : -1;
@@ -1217,9 +1330,9 @@ int rankCmpFunction(const void *p1, const void *p2)
 
 int oneGameRankCmpFunction(const void *p1, const void *p2)
 {
-    double p1_score = ((struct calcOneGameRankStruct *)p1)->score;
-    double p2_score = ((struct calcOneGameRankStruct *)p2)->score;
-    if (fabs(p1_score - p2_score) < 1e-5)
+    double p1_score = (*(struct calcOneGameRankStruct **)p1)->score;
+    double p2_score = (*(struct calcOneGameRankStruct **)p2)->score;
+    if (isTwoDoubleNumEqual(p1_score, p2_score) == 1)
         return 0;
     else
         return (p1_score < p2_score) ? 1 : -1;
@@ -1227,20 +1340,11 @@ int oneGameRankCmpFunction(const void *p1, const void *p2)
 
 
 
-int currentInfoDefaultSortCmpFunction(const void *p1, const void *p2)
+int weekInfoDefaultSortCmpFunction(const void *p1, const void *p2)
 {
-#if CUSTOM_SCORE
-    double p1_score = customScore((*(struct playerInfo **)p1)->point,
-            (*(struct playerInfo **)p1)->rate);
-    double p2_score = customScore((*(struct playerInfo **)p2)->point,
-            (*(struct playerInfo **)p2)->rate);
-#else
-    double p1_score = defaultScore((*(struct playerInfo **)p1)->point,
-            (*(struct playerInfo **)p1)->rate);
-    double p2_score = defaultScore((*(struct playerInfo **)p2)->point,
-            (*(struct playerInfo **)p2)->rate);
-#endif
-    if (fabs(p1_score - p2_score) < 1e-5)
+    double p1_score = (*(struct weekInfoStruct **)p1)->score;
+    double p2_score = (*(struct weekInfoStruct **)p2)->score;
+    if (isTwoDoubleNumEqual(p1_score, p2_score) == 1)
         return 0;
     else
         return (p1_score < p2_score) ? 1 : -1;
@@ -1248,20 +1352,20 @@ int currentInfoDefaultSortCmpFunction(const void *p1, const void *p2)
 
 
 
-int currentInfoPointSortCmpFunction(const void *p1, const void *p2)
+int weekInfoPointSortCmpFunction(const void *p1, const void *p2)
 {
-    int p1_point = (*(struct playerInfo **)p1)->point;
-    int p2_point = (*(struct playerInfo **)p2)->point;
+    int p1_point = (*(struct weekInfoStruct **)p1)->point;
+    int p2_point = (*(struct weekInfoStruct **)p2)->point;
     return p2_point - p1_point;
 }
 
 
 
-int currentInfoRateSortCmpFunction(const void *p1, const void *p2)
+int weekInfoRateSortCmpFunction(const void *p1, const void *p2)
 {
-    double p1_rate = (*(struct playerInfo **)p1)->rate;
-    double p2_rate = (*(struct playerInfo **)p2)->rate;
-    if (fabs(p1_rate - p2_rate) < 1e-5)
+    double p1_rate = (*(struct weekInfoStruct **)p1)->rate;
+    double p2_rate = (*(struct weekInfoStruct **)p2)->rate;
+    if (isTwoDoubleNumEqual(p1_rate, p2_rate) == 1)
         return 0;
     else
         return (p1_rate < p2_rate) ? 1 : -1;
@@ -1286,6 +1390,16 @@ void swapTwoIntNum(int *i, int *j)
     *i = *i ^ *j;
     *j = *i ^ *j;
     *i = *i ^ *j;
+}
+
+
+
+int isTwoDoubleNumEqual(double d1, double d2)
+{
+    if (fabs(d1 - d2) < 1e-5)
+        return 1;
+    else
+        return 0;
 }
 
 
