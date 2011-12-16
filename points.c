@@ -1318,8 +1318,8 @@ void writeBallotResult(int oneGameResult[][3], int resultNum, int week)
 
 int rankCmpFunction(const void *p1, const void *p2)
 {
-    double p1_score = (*(struct calcRankStruct **)p1)->score;
-    double p2_score = (*(struct calcRankStruct **)p2)->score;
+    double p1_score = (*(struct calcRankStruct *)p1).score;
+    double p2_score = (*(struct calcRankStruct *)p2).score;
     if (isTwoDoubleNumEqual(p1_score, p2_score) == 1)
         return 0;
     else
@@ -1330,8 +1330,8 @@ int rankCmpFunction(const void *p1, const void *p2)
 
 int oneGameRankCmpFunction(const void *p1, const void *p2)
 {
-    double p1_score = (*(struct calcOneGameRankStruct **)p1)->score;
-    double p2_score = (*(struct calcOneGameRankStruct **)p2)->score;
+    double p1_score = (*(struct calcOneGameRankStruct *)p1).score;
+    double p2_score = (*(struct calcOneGameRankStruct *)p2).score;
     if (isTwoDoubleNumEqual(p1_score, p2_score) == 1)
         return 0;
     else
