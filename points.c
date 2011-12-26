@@ -25,8 +25,7 @@ int startMenu(void)
         printf("你的选择: ");
 
         scanf("%c", &startMenuSelection);
-        while (getchar() != '\n')
-            ;
+        discardStdinEnter();
         switch(startMenuSelection) {
             case 'a':
                 while (addPlayer(p_playerInfo, &playerNum) == 0)
@@ -79,8 +78,7 @@ int addPlayer(struct playerInfo* p_playerInfo[], int *p_playerNum)
     printf("你的选择: ");
     addPlayerSelection = getchar();
     if (addPlayerSelection != '\n')
-        while (getchar() != '\n')
-            ;
+        discardStdinEnter();
 
     switch (addPlayerSelection) {
         case 'a':
@@ -88,13 +86,11 @@ int addPlayer(struct playerInfo* p_playerInfo[], int *p_playerNum)
             /* read name */
             printf("姓名: ");
             scanf("%s", p_tmp->name);
-            while (getchar() != '\n')
-                ;
+            discardStdinEnter();
             /* read sex */
             printf("性别[m]/f: ");
             scanf("%c", &(p_tmp->sex));
-            while (getchar() != '\n')
-                ;
+            discardStdinEnter();
             /* init the new player */
             p_tmp->num = playerNum + 1;
             p_tmp->startWeek = getCurrentGameWeek();
@@ -115,22 +111,18 @@ int addPlayer(struct playerInfo* p_playerInfo[], int *p_playerNum)
         case 'd':
             printf("序号: ");
             scanf("%d", &deletePlayerNum);
-            while (getchar() != '\n')
-                ;
+            discardStdinEnter();
             for (i = 0; i < playerNum; ++i)
                 if (p_playerInfo[i]->num == deletePlayerNum)
                     break;
             if (i == playerNum) {
                 printf("未找到序号为 %d 的选手\n", deletePlayerNum);
-                printf("Enter键返回...");
-                while (getchar() != '\n')
-                    ;
+                pauseUntilStdInputEnter();
             }
             else {
                 printf("确定要删除序号为 %d 的选手y/[n]: ", deletePlayerNum);
                 scanf("%c", &c);
-                while (getchar() != '\n')
-                    ;
+                discardStdinEnter();
                 if (c == 'y' || c == 'Y')
                     p_playerInfo[i]->stopWeek = getCurrentGameWeek();
             }
@@ -164,20 +156,16 @@ int ballot(struct playerInfo *p_playerInfo[], int playerNum)
 
     printf("当次比赛选手数: ");
     scanf("%d", &ballotPlayerNum);
-    while (getchar() != '\n')
-        ;
+    discardStdinEnter();
     printf("每位选手的比赛场数");
     if (ballotPlayerNum % 2 != 0)
         printf("(偶数)");
     printf(": ");
     scanf("%d", &eachPlayerTimes);
-    while (getchar() != '\n')
-        ;
+    discardStdinEnter();
     if (ballotPlayerNum % 2 != 0 && eachPlayerTimes % 2 != 0) {
         printf("当选手数是奇数时，每位选手的比赛场数必须是偶数...\n");
-        printf("Enter键返回...");
-        while (getchar() != '\n')
-            ;
+        pauseUntilStdInputEnter();
         return -2;
     }
 
@@ -196,8 +184,7 @@ int ballot(struct playerInfo *p_playerInfo[], int playerNum)
     printf("输入当次比赛参赛选手序号，以空格分隔: ");
     for (i = 0; i < lines; ++i)
         scanf("%d", p_ballotArray + i*cols);
-    while (getchar() != '\n')
-        ;
+    discardStdinEnter();
 
     /* make sure everyone exist */
     for (i = 0; i < lines; ++i) {
@@ -207,9 +194,7 @@ int ballot(struct playerInfo *p_playerInfo[], int playerNum)
         if (l == playerNum) {
             printf("\n\n%d号选手不存在...\n", *(p_ballotArray + i*cols));
             free(p_ballotArray);
-            printf("Enter键返回...");
-            while (getchar() != '\n')
-                ;
+            pauseUntilStdInputEnter();
             return -3;
         }
     }
@@ -305,9 +290,7 @@ int ballot(struct playerInfo *p_playerInfo[], int playerNum)
     free(p_ballotArray);
 
     printf("\n");
-    printf("Enter键返回...");
-    while (getchar() != '\n')
-        ;
+    pauseUntilStdInputEnter();
 
     return 0;
 }
@@ -354,8 +337,7 @@ int printInfo(struct playerInfo *p_playerInfo[], int playerNum)
     printf("[q]  离    开\n");
     printf("你的选择: ");
     scanf("%c", &printInfoSelection);
-    while (getchar() != '\n')
-        ;
+    discardStdinEnter();
 
     switch (printInfoSelection) {
         case 'c':
@@ -400,8 +382,7 @@ int printBallotResult(struct playerInfo *p_playerInfo[],
     fp_swp = fopen(BALLOT_SWP_FILE_PATH, "w");
     printf("请输入本次抽签标识字串，比如 20111201 : ");
     scanf("%s", text);
-    while (getchar() != '\n')
-        ;
+    discardStdinEnter();
     fprintf(fp_swp, " %s ", text);
     fprintf(fp_swp, " %d", lines*(cols-1)/2);
     printf("抽签结果:\n");
@@ -441,8 +422,7 @@ int printBallotResult(struct playerInfo *p_playerInfo[],
 
     printf("\n保存本次抽签结果到文件，覆盖上次抽签结果[y]/n: ");
     scanf("%c", &c);
-    while (getchar() != '\n')
-        ;
+    discardStdinEnter();
     if (c == 'y' || c == 'Y') {
         remove(BALLOT_FILE_PATH);
         rename(BALLOT_SWP_FILE_PATH, BALLOT_FILE_PATH);
@@ -627,16 +607,13 @@ int addOneGameResult(struct playerInfo *p_playerInfo[], int playerNum,
     /* get xxxx-xx-xx */
     printf("年: ");
     scanf("%d", &year);
-    while (getchar() != '\n')
-        ;
+    discardStdinEnter();
     printf("月: ");
     scanf("%d", &month);
-    while (getchar() != '\n')
-        ;
+    discardStdinEnter();
     printf("日: ");
     scanf("%d", &day);
-    while (getchar() != '\n')
-        ;
+    discardStdinEnter();
 
     /* get result */
     for (i = 0; ; ++i) {
@@ -645,21 +622,17 @@ int addOneGameResult(struct playerInfo *p_playerInfo[], int playerNum,
         printf("第 %d 场\n", i+1);
         printf("胜方: ");
         scanf("%d", &oneGameResult[i][0]);
-        while (getchar() != '\n')
-            ;
+        discardStdinEnter();
         printf("负方: ");
         scanf("%d", &oneGameResult[i][1]);
-        while (getchar() != '\n')
-            ;
+        discardStdinEnter();
         printf("是否存在弃权y/[n]: ");
         scanf("%c", &c);
-        while (getchar() != '\n')
-            ;
+        discardStdinEnter();
         if (c == 'y' || c == 'Y') {
             printf("[a] -负方弃权    [c] -双方弃权: ");
             scanf("%c", &c);
-            while (getchar() != '\n')
-                ;
+            discardStdinEnter();
             switch (c) {
                 case 'a':
                     oneGameResult[i][2] = 1;
@@ -676,8 +649,7 @@ int addOneGameResult(struct playerInfo *p_playerInfo[], int playerNum,
             oneGameResult[i][2] = 0;
         printf("继续[y]/n: ");
         scanf("%c", &c);
-        while (getchar() != '\n')
-            ;
+        discardStdinEnter();
         if (c == 'n' || c == 'N')
             break;
     }
@@ -713,25 +685,20 @@ int addOneGameResultFromBallotFile(struct playerInfo *p_playerInfo[],
     fp_ballot = fopen(BALLOT_FILE_PATH, "r");
     if (fp_ballot == NULL) {
         printf("\n不存在已保存的抽签结果\n\n");
-        printf("Enter键返回...");
-        while (getchar() != '\n')
-            ;
+        pauseUntilStdInputEnter();
         return -3;
     }
 
     /* get xxxx-xx-xx */
     printf("年: ");
     scanf("%d", &year);
-    while (getchar() != '\n')
-        ;
+    discardStdinEnter();
     printf("月: ");
     scanf("%d", &month);
-    while (getchar() != '\n')
-        ;
+    discardStdinEnter();
     printf("日: ");
     scanf("%d", &day);
-    while (getchar() != '\n')
-        ;
+    discardStdinEnter();
 
     if (fp_ballot != NULL) {
         fscanf(fp_ballot, "%s", text);
@@ -752,8 +719,7 @@ int addOneGameResultFromBallotFile(struct playerInfo *p_playerInfo[],
             printf("%s[%2d]", p_playerInfo[j]->name, playerB);
             printf("        胜方a/b/A/B/C: ");
             scanf("%c", &winPlayer);
-            while (getchar() != '\n')
-                ;
+            discardStdinEnter();
             switch (winPlayer) {
                 case 'a':
                     oneGameResult[i][0] = playerA;
@@ -852,20 +818,17 @@ void printPlayerInfoByType(struct playerInfo *p_playerInfo[], int playerNum,
                 printWeekDate();
                 printf("输入周次: ");
                 scanf("%d", &lastWeek);
-                while (getchar() != '\n')
-                    ;
+                discardStdinEnter();
                 firstWeek = lastWeek;
                 break;
             case PRINT_TYPE_SOME_WEEKS:
                 printWeekDate();
                 printf("起始周次: ");
                 scanf("%d", &firstWeek);
-                while (getchar() != '\n')
-                    ;
+                discardStdinEnter();
                 printf("终了周次: ");
                 scanf("%d", &lastWeek);
-                while (getchar() != '\n')
-                    ;
+                discardStdinEnter();
                 break;
             default:
                 break;
@@ -877,8 +840,7 @@ void printPlayerInfoByType(struct playerInfo *p_playerInfo[], int playerNum,
         printf("[c]  胜率排序\n");
         printf("你的选择: ");
         scanf("%c", &sortSelection);
-        while (getchar() != '\n')
-            ;
+        discardStdinEnter();
 
         /* sort */
         switch (type) {
@@ -945,9 +907,7 @@ void printPlayerInfoByType(struct playerInfo *p_playerInfo[], int playerNum,
     }
 
     printf("\n");
-    printf("Enter键返回...");
-    while (getchar() != '\n')
-        ;
+    pauseUntilStdInputEnter();
 
     if (actualPlayerNum != 0)
         freeWeeksPlayerInfoStruct(p_tmp, actualPlayerNum);

@@ -23,3 +23,20 @@ int isTwoDoubleNumEqual(double d1, double d2)
     else
         return 0;
 }
+
+
+
+void pauseUntilStdInputEnter(void)
+{
+    printf("\nInput Enter to Return...");
+    while (getchar() != '\n')
+        ;
+}
+
+
+
+void discardStdinEnter(void)
+{
+    while (getchar() != '\n')
+        ;
+}
