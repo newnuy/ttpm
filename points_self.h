@@ -133,8 +133,6 @@ int weekInfoDefaultSortCmpFunction(const void *p1, const void *p2);
 int weekInfoPointSortCmpFunction(const void *p1, const void *p2);
 int weekInfoRateSortCmpFunction(const void *p1, const void *p2);
 int isThisWeekValid(int thisWeek, int startWeek, int stopWeek);
-void swapTwoIntNum(int *i, int *j);
-int isTwoDoubleNumEqual(double d1, double d2);
 double defaultScore(int point, double rate);
 double customScore(int point, double rate);
 char customPrintBallotLevel(struct playerInfo *p_playerInfo[], int index);

@@ -5,7 +5,7 @@ STRIP = strip
 
 
 exefile  = ttpm
-objects  = ttpm.o points.o ver.o
+objects  = ttpm.o points.o commonFunctions.o ver.o
 dev_dir  = files
 user_dir = files_backup
 
