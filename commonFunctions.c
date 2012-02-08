@@ -7,7 +7,7 @@
 
 void swapTwoIntNum(int *i, int *j)
 {
-    if (*i == *j)
+    if (i == j)
         return;
     *i = *i ^ *j;
     *j = *i ^ *j;
