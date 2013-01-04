@@ -980,7 +980,7 @@ int readPlayerInfo(struct playerInfo *p_playerInfo[])
                     (struct playerInfo *)malloc(sizeof(struct playerInfo));
             fscanf(fp, "%d %d %d %s %c %c %c %d %d %d %lf %d %d %d",
                     &(p_playerInfo[i]->num),
-                    &(p_playerInfo[i]->stopWeek),
+                    &(p_playerInfo[i]->startWeek),
                     &(p_playerInfo[i]->stopWeek),
                     p_playerInfo[i]->name,
                     &(p_playerInfo[i]->sex),
