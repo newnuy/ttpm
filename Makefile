@@ -1,6 +1,7 @@
 CC    = gcc -g -O
 RM    = rm -rf
 MV    = mv
+CP    = cp -rf
 STRIP = strip
 
 
@@ -19,8 +20,9 @@ $(exefile): $(objects)
 release:
 	$(STRIP) $(exefile)
 	$(RM) $(dev_dir)
-	$(MV) $(user_dir) $(dev_dir)
+	$(CP) $(user_dir) $(dev_dir)
 
 .PHONY: clean
 clean:
 	$(RM) $(exefile) $(objects)
+	$(RM) $(dev_dir)
