@@ -99,7 +99,7 @@ int addPlayer(struct playerInfo* p_playerInfo[], int *p_playerNum)
             p_tmp->iceLevel = p_tmp->level;
             p_tmp->winNum = 0;
             p_tmp->failNum = 0;
-            p_tmp->point = 0;
+            p_tmp->point = BASE_POINT;
             p_tmp->rate = 0;
             p_tmp->rank = playerNum + 1;
             p_tmp->lastWeek = 0;
@@ -497,6 +497,7 @@ int calcFromOneNewGameResult(struct playerInfo *p_playerInfo[],
                             anotherPlayerLevel = p_playerInfo[l]->level;
                             break;
                         }
+                    /* if give up */
                     if (oneGameResult[j][2] == 2)
                         p_tmp->point += GIVE_UP_BASE_POINT;
                     else if (p_tmp->levelBefore > anotherPlayerLevel)
@@ -508,9 +509,17 @@ int calcFromOneNewGameResult(struct playerInfo *p_playerInfo[],
                 /* calculate loser's point */
                 else {
                     ++(p_tmp->failNum);
+                    for (l = 0; l < playerNum; ++l)
+                        if (p_playerInfo[l]->num == oneGameResult[j][0]) {
+                            anotherPlayerLevel = p_playerInfo[l]->level;
+                            break;
+                        }
                     /* if give up */
                     if (oneGameResult[j][2] != 0)
                         p_tmp->point += GIVE_UP_BASE_POINT;
+                    else if (p_tmp->levelBefore < anotherPlayerLevel)
+                        p_tmp->point += (FAIL_BASE_POINT + FAIL_STEP_POINT
+                                * (anotherPlayerLevel - p_tmp->levelBefore));
                     else
                         p_tmp->point += FAIL_BASE_POINT;
                 }
@@ -922,9 +931,9 @@ void printPlayerInfoTableHeadByType(int type)
     printf("  性别");
     printf("   胜");
     printf("   负");
-    printf("  积分");
     printf("    胜率");
-    printf("    成绩");
+    printf("   积分");
+    //printf("    成绩");
     if (type == PRINT_TYPE_CURRENT || type == PRINT_TYPE_CURRENT_WEEK ||
             type == PRINT_TYPE_WEEK || type == PRINT_TYPE_SOME_WEEKS)
         printf("  排名");
@@ -950,9 +959,9 @@ void printPlayerInfoTableBodyByType(struct weekInfoStruct *p_weekInfo[],
             printf("    女");
         printf("%5d", p_weekInfo[i]->winNum);
         printf("%5d", p_weekInfo[i]->failNum);
-        printf("%6d", p_weekInfo[i]->point);
         printf("%7.1lf%%", p_weekInfo[i]->rate * 100);
-        printf("%8.2lf", p_weekInfo[i]->score);
+        printf("%7d", p_weekInfo[i]->point);
+        //printf("%8.2lf", p_weekInfo[i]->score);
         if (type == PRINT_TYPE_CURRENT_WEEK || type == PRINT_TYPE_WEEK ||
                 type == PRINT_TYPE_SOME_WEEKS)
             printf("%6d", p_weekInfo[i]->rank);
@@ -1346,7 +1355,7 @@ int isThisWeekValid(int thisWeek, int startWeek, int stopWeek)
 
 double defaultScore(int point, double rate)
 {
-    return point * rate;
+    return point;
 }
 
 

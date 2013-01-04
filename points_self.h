@@ -5,13 +5,15 @@
 
 
 /* user defined begin */
-#define WIN_BASE_POINT          3
-#define WIN_STEP_POINT          1
-#define FAIL_BASE_POINT         1
-#define GIVE_UP_BASE_POINT      -3
+#define BASE_POINT              1200
+#define WIN_BASE_POINT          15
+#define WIN_STEP_POINT          5
+#define FAIL_BASE_POINT         -12
+#define FAIL_STEP_POINT         -3
+#define GIVE_UP_BASE_POINT      -40
 #define LEVEL_NUM               4
 #define DEFAULT_LEVEL           'C'
-#define CUSTOM_SCORE            1
+#define CUSTOM_SCORE            0
 #define CUSTOM_BALLOT_LEVEL     1
 
 #define PLAYERS_NUM_MAX         64
