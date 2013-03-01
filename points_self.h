@@ -5,7 +5,7 @@
 
 
 /* user defined begin */
-#define BASE_POINT              1200
+#define BASE_POINT              1000
 #define WIN_BASE_POINT          15
 #define WIN_STEP_POINT          5
 #define FAIL_BASE_POINT         -12
@@ -18,6 +18,7 @@
 
 #define PLAYERS_NUM_MAX         64
 #define WEEK_NUM_MAX            64
+#define PIC_HEIGHT              21
 /* user defined end */
 
 
@@ -101,6 +102,7 @@ int addPlayer(struct playerInfo* p_playerInfo[], int *p_playerNum);
 int ballot(struct playerInfo *p_playerInfo[], int playerNum);
 int recordOneGameResult(struct playerInfo *p_playerInfo[], int playerNum);
 int printInfo(struct playerInfo *p_playerInfo[], int playerNum);
+int drawPlayer(struct playerInfo *p_playerInfo[], int playerNum);
 int printBallotResult(struct playerInfo *p_playerInfo[],
         int playerNum, int *p_ballotArray, int lines, int cols);
 int calcFromOneNewGameResult(struct playerInfo *p_playerInfo[],
@@ -116,6 +118,9 @@ void printPlayerInfoByType(struct playerInfo *p_playerInfo[], int playerNum,
 void printPlayerInfoTableHeadByType(int type);
 void printPlayerInfoTableBodyByType(struct weekInfoStruct *p_weekInfo[],
         int actualPlayerNum, int type);
+int drawOnePlayer(struct playerInfo *p_playerInfo[], int playerNum,
+        int thisPlayerNum);
+int drawPointPic(struct playerInfo *p_playerInfo, int yMin, int yMax, int yStep);
 int readPlayerInfo(struct playerInfo *p_playerInfo[]);
 void writePlayerInfo(struct playerInfo *p_playerInfo[], int playerNum);
 void freePlayerInfoStruct(struct playerInfo *p_playerInfo[], int playerNum);

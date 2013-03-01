@@ -18,9 +18,8 @@ int startMenu(void)
         printf("[a]  增删选手\n");
         printf("[b]  赛前抽签\n");
         printf("[r]  录入成绩\n");
-        printf("[e]  修改成绩\n");
-        printf("[c]  计    算\n");
-        printf("[p]  打    印\n");
+        printf("[p]  打印列表\n");
+        printf("[d]  绘制图线\n");
         printf("[q]  离    开\n");
         printf("你的选择: ");
 
@@ -37,12 +36,11 @@ int startMenu(void)
             case 'r':
                 recordOneGameResult(p_playerInfo, playerNum);
                 break;
-            case 'e':
-                break;
-            case 'c':
-                break;
             case 'p':
                 printInfo(p_playerInfo, playerNum);
+                break;
+            case 'd':
+                drawPlayer(p_playerInfo, playerNum);
                 break;
             case 'q':
             default:
@@ -333,7 +331,6 @@ int printInfo(struct playerInfo *p_playerInfo[], int playerNum)
     printf("[n]  最近单周\n");
     printf("[w]  单周信息\n");
     printf("[s]  多周信息\n");
-    printf("[p]  单名选手\n");
     printf("[q]  离    开\n");
     printf("你的选择: ");
     scanf("%c", &printInfoSelection);
@@ -354,12 +351,38 @@ int printInfo(struct playerInfo *p_playerInfo[], int playerNum)
             printPlayerInfoByType(p_playerInfo, playerNum,
                     PRINT_TYPE_SOME_WEEKS);
             break;
-        case 'p':
-            break;
         case 'q':
         default:
             return -1;
             break;
+    }
+
+    return 0;
+}
+
+
+
+int drawPlayer(struct playerInfo *p_playerInfo[], int playerNum)
+{
+    int drawPlayerNum;
+
+    while (1) {
+        /* print players */
+        printf("\n所有参赛选手:\n");
+        printAllPlayerName(p_playerInfo, playerNum);
+
+        /* get the player number to draw */
+        printf("请输入选手序号，输入 0 退出 : ");
+        scanf("%d", &drawPlayerNum);
+        discardStdinEnter();
+        if (drawPlayerNum == 0)
+            break;
+
+        /* draw this player */
+        drawOnePlayer(p_playerInfo, playerNum, drawPlayerNum);
+
+        printf("\n");
+        pauseUntilStdInputEnter();
     }
 
     return 0;
@@ -971,6 +994,115 @@ void printPlayerInfoTableBodyByType(struct weekInfoStruct *p_weekInfo[],
             printf("%6c", p_weekInfo[i]->p_playerInfo->level);
         printf("\n");
     }
+}
+
+
+
+int drawOnePlayer(struct playerInfo *p_playerInfo[], int playerNum,
+        int thisPlayerNum)
+{
+    int i;
+    int yMin;
+    int yMax;
+    int yStep;
+    int point;
+    struct oneGameInfo *p_oneGameInfo;
+
+    yMin = BASE_POINT;
+    yMax = BASE_POINT;
+
+    /* draw */
+    for (i = 0; i < playerNum; ++i)
+        if (p_playerInfo[i]->num == thisPlayerNum) {
+            /* draw player name */
+            printf("\n\n姓名: %s\n", p_playerInfo[i]->name);
+
+            /* get yMin and yMax */
+            p_oneGameInfo = p_playerInfo[i]->p_oneGameInfo;
+            while (p_oneGameInfo != NULL) {
+                point = p_oneGameInfo->point + p_oneGameInfo->pointBefore;
+                if (point < yMin)
+                    yMin = point;
+                else if (point > yMax)
+                    yMax = point;
+                p_oneGameInfo = p_oneGameInfo->next;
+            }
+
+            /* get yStep and recalculate yMax */
+            if ((yMax-yMin) % (PIC_HEIGHT-1) != 0)
+                yStep = (yMax - yMin) / (PIC_HEIGHT - 1) + 1;
+            else
+                yStep = (yMax - yMin) / (PIC_HEIGHT - 1);
+            yMax = yMin + yStep * (PIC_HEIGHT - 1);
+
+            drawPointPic(p_playerInfo[i], yMin, yMax, yStep);
+            break;
+        }
+
+    /* not found this player */
+    if (i == playerNum) {
+        printf("\n不存在该选手\n");
+        return -1;
+    }
+    else
+        return 0;
+}
+
+
+
+int drawPointPic(struct playerInfo *p_playerInfo, int yMin, int yMax, int yStep)
+{
+    int yCurr;
+    struct oneGameInfo *p_tmp;
+    int xMin;
+    int xMax;
+    int xCurr;
+    int point;
+    int found;
+
+    /* get xMin and xMax */
+    xMin = 0;
+    xMax = getCurrentGameWeek();
+
+    /* draw */
+    for (yCurr = yMax; yCurr >= yMin; yCurr -= yStep) {
+        /* draw y scale*/
+        printf("%4d~", yCurr);
+
+        /* draw every line */
+        p_tmp = p_playerInfo->p_oneGameInfo;
+        for (xCurr = xMin; xCurr <= xMax; ++xCurr) {
+            found = 0;
+            /* draw BASE_POINT */
+            if (xCurr == p_playerInfo->startWeek) {
+                if (BASE_POINT < yCurr+yStep/2.0
+                        && BASE_POINT >= yCurr-yStep/2.0) {
+                    printf(" X");
+                    found = 1;
+                }
+            }
+            /* draw other point */
+            else
+                while (p_tmp != NULL) {
+                    point = p_tmp->pointBefore + p_tmp->point;
+                    if (p_tmp->week == xCurr && point < yCurr+yStep/2.0
+                            && point >= yCurr-yStep/2.0) {
+                        printf(" X");
+                        found = 1;
+                    }
+                    if (p_tmp->week > xCurr)
+                        break;
+                    p_tmp = p_tmp->next;
+                }
+            /* if not found, draw blank */
+            if (found == 0)
+                printf("  ");
+        }
+
+        printf("\n");
+    }
+
+    return 0;
 }
 
 
