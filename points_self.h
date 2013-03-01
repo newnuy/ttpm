@@ -111,6 +111,8 @@ int addOneGameResult(struct playerInfo *p_playerInfo[], int playerNum,
         int oneGameResult[][3]);
 int addOneGameResultFromBallotFile(struct playerInfo *p_playerInfo[],
         int playerNum, int oneGameResult[][3]);
+void printOneGameResult(struct playerInfo *p_playerInfo[], int playerNum,
+        int oneGameResult[][3], int resultNum);
 void printPlayerName(struct playerInfo *p_playerInfo[], int playerNum);
 void printAllPlayerName(struct playerInfo *p_playerInfo[], int playerNum);
 void printPlayerInfoByType(struct playerInfo *p_playerInfo[], int playerNum,

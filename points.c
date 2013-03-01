@@ -308,6 +308,7 @@ int recordOneGameResult(struct playerInfo *p_playerInfo[], int playerNum)
                 oneGameResult);
     else
         resultNum = addOneGameResult(p_playerInfo, playerNum, oneGameResult);
+
     if (resultNum == -2) {
         printf("输入有误\n\n");
         return -2;
@@ -316,6 +317,11 @@ int recordOneGameResult(struct playerInfo *p_playerInfo[], int playerNum)
         printf("不存在已保存的抽签结果\n\n");
         return -3;
     }
+
+    printf("\n\n录入成绩一览:\n");
+    printOneGameResult(p_playerInfo, playerNum, oneGameResult, resultNum);
+    pauseUntilStdInputEnter();
+
     calcFromOneNewGameResult(p_playerInfo, playerNum, oneGameResult, resultNum);
 
     return 0;
@@ -793,6 +799,47 @@ int addOneGameResultFromBallotFile(struct playerInfo *p_playerInfo[],
     writeBallotResult(oneGameResult, resultNum, week);
 
     return resultNum;
+}
+
+
+
+void printOneGameResult(struct playerInfo *p_playerInfo[], int playerNum,
+        int oneGameResult[][3], int resultNum)
+{
+    int i;
+    int j;
+
+    for (i = 0; i < resultNum; ++i) {
+        /* print the winner */
+        for (j = 0; j < playerNum; ++j)
+            if (p_playerInfo[j]->num == oneGameResult[i][0]) {
+                printf("(%c)%s", p_playerInfo[j]->iceLevel,
+                        p_playerInfo[j]->name);
+                if (oneGameResult[i][2] == 2)
+                    printf("<弃权>");
+                else
+                    printf("      ");
+                break;
+            }
+
+        if (oneGameResult[i][2] == 2)
+            printf("  平  ");
+        else
+            printf("  胜  ");
+
+        /* print the loser */
+        for (j = 0; j < playerNum; ++j)
+            if (p_playerInfo[j]->num == oneGameResult[i][1]) {
+                if (oneGameResult[i][2] == 0)
+                    printf("      ");
+                else
+                    printf("<弃权>");
+                printf("%s(%c)", p_playerInfo[j]->name,
+                        p_playerInfo[j]->iceLevel);
+            }
+
+        printf("\n");
+    }
 }
 
 
