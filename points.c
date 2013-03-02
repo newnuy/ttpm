@@ -1405,7 +1405,7 @@ int createWeeksPlayerInfoStruct(struct playerInfo *p_playerInfo[],
         found = 0;
         winNum = 0;
         failNum = 0;
-        point = 0;
+        point = BASE_POINT;
         if (isThisWeekValid(lastWeek, p_playerInfo[i]->startWeek,
                 p_playerInfo[i]->stopWeek) != 0) {
             p_tmp = p_playerInfo[i]->p_oneGameInfo;
