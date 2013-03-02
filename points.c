@@ -26,6 +26,7 @@ int startMenu(void)
 
         scanf("%c", &startMenuSelection);
         discardStdinEnter();
+
         switch(startMenuSelection) {
             case 'a':
                 while (addPlayer(p_playerInfo, &playerNum) == 0)
@@ -44,7 +45,10 @@ int startMenu(void)
                 drawPlayer(p_playerInfo, playerNum);
                 break;
             case 's':
+                writePlayerInfo(p_playerInfo, playerNum);
+                freePlayerInfoStruct(p_playerInfo, playerNum);
                 backupAndRestore();
+                playerNum = readPlayerInfo(p_playerInfo);
                 break;
             case 'q':
             default:
@@ -1240,7 +1244,7 @@ void restoreData(void)
     discardStdinEnter();
 
     if (strcmp(dirName, "0") != 0) {
-        sprintf(systemCmd, "cp -a %s%s %s", BACKUP_DIR_PATH_PRE, dirName,
+        sprintf(systemCmd, "cp -a %s%s/* %s/", BACKUP_DIR_PATH_PRE, dirName,
                 ALL_DATA_DIR_PATH);
         system(systemCmd);
         printf("\n已成功还原至 %s !\n", dirName);
