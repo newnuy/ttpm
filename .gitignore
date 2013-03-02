@@ -1,6 +1,7 @@
 *.[oa]
 files*/
 !/files_backup/
+!/files_time/
 ttpm
 *~
 *.swp

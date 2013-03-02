@@ -25,8 +25,9 @@
 #define YES                     1
 #define NO                      0
 #define NAME_LEN_MAX            32
-#define TEXT_LEN_MAX            32
+#define TEXT_LEN_MAX            256
 #define RANDOM_LOOP             8
+#define ALL_DATA_DIR_PATH       "./files"
 #define PLAYERS_FILE_PATH       "./files/players"
 #define PLAYERS_SWP_FILE_PATH   "./files/players.swp"
 #define DATA_FILE_PATH          "./files/data"
@@ -35,6 +36,8 @@
 #define WEEK_DATE_SWP_FILE_PATH "./files/week_date.swp"
 #define BALLOT_FILE_PATH        "./files/ballot"
 #define BALLOT_SWP_FILE_PATH    "./files/ballot.swp"
+#define BACKUP_DIR_PATH_PRE     "./files_time/"
+#define BACKUP_LIST_PATH        "./files_time/backup_list"
 
 struct oneGameInfo {
     int week;
@@ -103,6 +106,7 @@ int ballot(struct playerInfo *p_playerInfo[], int playerNum);
 int recordOneGameResult(struct playerInfo *p_playerInfo[], int playerNum);
 int printInfo(struct playerInfo *p_playerInfo[], int playerNum);
 int drawPlayer(struct playerInfo *p_playerInfo[], int playerNum);
+int backupAndRestore(void);
 int printBallotResult(struct playerInfo *p_playerInfo[],
         int playerNum, int *p_ballotArray, int lines, int cols);
 int calcFromOneNewGameResult(struct playerInfo *p_playerInfo[],
@@ -123,6 +127,8 @@ void printPlayerInfoTableBodyByType(struct weekInfoStruct *p_weekInfo[],
 int drawOnePlayer(struct playerInfo *p_playerInfo[], int playerNum,
         int thisPlayerNum);
 int drawPointPic(struct playerInfo *p_playerInfo, int yMin, int yMax, int yStep);
+void backupData(void);
+void restoreData(void);
 int readPlayerInfo(struct playerInfo *p_playerInfo[]);
 void writePlayerInfo(struct playerInfo *p_playerInfo[], int playerNum);
 void freePlayerInfoStruct(struct playerInfo *p_playerInfo[], int playerNum);

@@ -8,7 +8,7 @@ STRIP = strip
 exefile  = ttpm
 objects  = ttpm.o points.o commonFunctions.o ver.o
 dev_dir  = files
-user_dir = files_backup
+user_dir = files_time/backup@1970-01-01_00h00m00s
 
 
 $(exefile): $(objects)

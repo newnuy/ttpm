@@ -15,11 +15,12 @@ int startMenu(void)
 
     while (isQuit == NO) {
         system("clear");
-        printf("[a]  增删选手\n");
-        printf("[b]  赛前抽签\n");
-        printf("[r]  录入成绩\n");
+        printf("[a]  增删选手  !建议先备份\n");
+        printf("[b]  赛前抽签  !建议先备份\n");
+        printf("[r]  录入成绩  !建议先备份\n");
         printf("[p]  打印列表\n");
         printf("[d]  绘制图线\n");
+        printf("[s]  备份还原\n");
         printf("[q]  离    开\n");
         printf("你的选择: ");
 
@@ -41,6 +42,9 @@ int startMenu(void)
                 break;
             case 'd':
                 drawPlayer(p_playerInfo, playerNum);
+                break;
+            case 's':
+                backupAndRestore();
                 break;
             case 'q':
             default:
@@ -389,6 +393,34 @@ int drawPlayer(struct playerInfo *p_playerInfo[], int playerNum)
 
         printf("\n");
         pauseUntilStdInputEnter();
+    }
+
+    return 0;
+}
+
+
+
+int backupAndRestore(void)
+{
+    char backupAndRestoreSelection;
+
+    printf("[s]  备份数据\n");
+    printf("[r]  还原数据  !建议先备份\n");
+    printf("[q]  离    开\n");
+    printf("你的选择: ");
+    scanf("%c", &backupAndRestoreSelection);
+    discardStdinEnter();
+
+    switch (backupAndRestoreSelection) {
+        case 's':
+            backupData();
+            break;
+        case 'r':
+            restoreData();
+            break;
+        case 'q':
+        default:
+            break;
     }
 
     return 0;
@@ -1150,6 +1182,70 @@ int drawPointPic(struct playerInfo *p_playerInfo, int yMin, int yMax, int yStep)
     }
 
     return 0;
+}
+
+
+
+void backupData(void)
+{
+    char systemCmd[TEXT_LEN_MAX];
+    char dirName[TEXT_LEN_MAX];
+    time_t nowSec;
+    struct tm *nowTime;
+    int year;
+    int month;
+    int day;
+    int hour;
+    int minute;
+    int second;
+
+    time(&nowSec);
+    nowTime = localtime(&nowSec);
+    year = nowTime->tm_year + 1900;
+    month = nowTime->tm_mon + 1;
+    day = nowTime->tm_mday;
+    hour = nowTime->tm_hour;
+    minute = nowTime->tm_min;
+    second = nowTime->tm_sec;
+
+    sprintf(dirName, "%s%d-%d-%d_%dh%dm%ds", "backup@", year, month, day,
+            hour, minute, second);
+
+    /* backup */
+    sprintf(systemCmd, "cp -a %s %s%s", ALL_DATA_DIR_PATH, BACKUP_DIR_PATH_PRE,
+            dirName);
+    system(systemCmd);
+
+    /* update backup list */
+    sprintf(systemCmd, "echo %s >> %s", dirName, BACKUP_LIST_PATH);
+    system(systemCmd);
+
+    printf("\n已成功备份到 %s !\n", dirName);
+    pauseUntilStdInputEnter();
+}
+
+
+
+void restoreData(void)
+{
+    char systemCmd[TEXT_LEN_MAX];
+    char dirName[TEXT_LEN_MAX];
+
+    printf("\n所有存档的历史版本: \n");
+    sprintf(systemCmd, "cat %s", BACKUP_LIST_PATH);
+    system(systemCmd);
+
+    printf("请输入历史版本名称, 输入 0 退出: ");
+    scanf("%s", dirName);
+    discardStdinEnter();
+
+    if (strcmp(dirName, "0") != 0) {
+        sprintf(systemCmd, "cp -a %s%s %s", BACKUP_DIR_PATH_PRE, dirName,
+                ALL_DATA_DIR_PATH);
+        system(systemCmd);
+        printf("\n已成功还原至 %s !\n", dirName);
+        pauseUntilStdInputEnter();
+    }
 }
 
 
