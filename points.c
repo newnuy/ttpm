@@ -960,30 +960,11 @@ void printPlayerInfoByType(struct playerInfo *p_playerInfo[], int playerNum,
         /* sort */
         switch (type) {
             case PRINT_TYPE_CURRENT:
-                actualPlayerNum = createWeeksPlayerInfoStruct(p_playerInfo,
-                        playerNum, p_tmp, firstWeek, lastWeek);
-                switch (sortSelection) {
-                    case 'a':
-                        break;
-                    case 'b':
-                        qsort(p_tmp, actualPlayerNum,
-                                sizeof(struct weekInfoStruct *),
-                                weekInfoPointSortCmpFunction);
-                        break;
-                    case 'c':
-                        qsort(p_tmp, actualPlayerNum,
-                                sizeof(struct weekInfoStruct *),
-                                weekInfoRateSortCmpFunction);
-                        break;
-                    default:
-                        break;
-                }
-                break;
             case PRINT_TYPE_CURRENT_WEEK:
             case PRINT_TYPE_WEEK:
             case PRINT_TYPE_SOME_WEEKS:
                 actualPlayerNum = createWeeksPlayerInfoStruct(p_playerInfo,
-                        playerNum, p_tmp, firstWeek, lastWeek);
+                        playerNum, p_tmp, firstWeek, lastWeek, type);
                 switch (sortSelection) {
                     case 'a':
                         break;
@@ -1391,7 +1372,7 @@ void freePlayerInfoStruct(struct playerInfo *p_playerInfo[], int playerNum)
 
 int createWeeksPlayerInfoStruct(struct playerInfo *p_playerInfo[],
         int playerNum, struct weekInfoStruct *p_weekInfo[],
-        int firstWeek, int lastWeek)
+        int firstWeek, int lastWeek, int type)
 {
     struct oneGameInfo *p_tmp;
     int i;
@@ -1405,7 +1386,11 @@ int createWeeksPlayerInfoStruct(struct playerInfo *p_playerInfo[],
         found = 0;
         winNum = 0;
         failNum = 0;
-        point = BASE_POINT;
+        if (type == PRINT_TYPE_CURRENT)
+            point = BASE_POINT;
+        else
+            point = 0;
+
         if (isThisWeekValid(lastWeek, p_playerInfo[i]->startWeek,
                 p_playerInfo[i]->stopWeek) != 0) {
             p_tmp = p_playerInfo[i]->p_oneGameInfo;

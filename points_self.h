@@ -134,7 +134,7 @@ void writePlayerInfo(struct playerInfo *p_playerInfo[], int playerNum);
 void freePlayerInfoStruct(struct playerInfo *p_playerInfo[], int playerNum);
 int createWeeksPlayerInfoStruct(struct playerInfo *p_playerInfo[],
         int playerNum, struct weekInfoStruct *p_weekInfo[],
-        int firstWeek, int lastWeek);
+        int firstWeek, int lastWeek, int type);
 void freeWeeksPlayerInfoStruct(struct weekInfoStruct *p_weekInfo[],
         int actualPlayerNum);
 int getCurrentGameWeek(void);
