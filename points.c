@@ -854,7 +854,7 @@ void printOneGameResult(struct playerInfo *p_playerInfo[], int playerNum,
                 if (oneGameResult[i][2] == 2)
                     printf("<弃权>");
                 else
-                    printf("      ");
+                    printf(" 　　 ");
                 break;
             }
 
@@ -867,7 +867,7 @@ void printOneGameResult(struct playerInfo *p_playerInfo[], int playerNum,
         for (j = 0; j < playerNum; ++j)
             if (p_playerInfo[j]->num == oneGameResult[i][1]) {
                 if (oneGameResult[i][2] == 0)
-                    printf("      ");
+                    printf(" 　　 ");
                 else
                     printf("<弃权>");
                 printf("%s(%c)", p_playerInfo[j]->name,
@@ -1013,13 +1013,13 @@ void printPlayerInfoByType(struct playerInfo *p_playerInfo[], int playerNum,
 
 void printPlayerInfoTableHeadByType(int type)
 {
-    printf("序号");
-    printf("    姓名");
+    printf(" No.");
+    printf("  　姓名");
     printf("  性别");
-    printf("   胜");
-    printf("   负");
-    printf("    胜率");
-    printf("   积分");
+    printf("    胜");
+    printf("    负");
+    printf("      胜率");
+    printf("     积分");
     //printf("    成绩");
     if (type == PRINT_TYPE_CURRENT || type == PRINT_TYPE_CURRENT_WEEK ||
             type == PRINT_TYPE_WEEK || type == PRINT_TYPE_SOME_WEEKS)
@@ -1041,21 +1041,21 @@ void printPlayerInfoTableBodyByType(struct weekInfoStruct *p_weekInfo[],
         printf("  %s", p_weekInfo[i]->p_playerInfo->name);
         if (p_weekInfo[i]->p_playerInfo->sex == 'm' ||
                 p_weekInfo[i]->p_playerInfo->sex == 'M')
-            printf("    男");
+            printf("  　男");
         else
-            printf("    女");
-        printf("%5d", p_weekInfo[i]->winNum);
-        printf("%5d", p_weekInfo[i]->failNum);
-        printf("%7.1lf%%", p_weekInfo[i]->rate * 100);
-        printf("%7d", p_weekInfo[i]->point);
+            printf("  　女");
+        printf("　%4d", p_weekInfo[i]->winNum);
+        printf("　%4d", p_weekInfo[i]->failNum);
+        printf("　　%5.1lf%%", p_weekInfo[i]->rate * 100);
+        printf("　　%5d", p_weekInfo[i]->point);
         //printf("%8.2lf", p_weekInfo[i]->score);
         if (type == PRINT_TYPE_CURRENT_WEEK || type == PRINT_TYPE_WEEK ||
                 type == PRINT_TYPE_SOME_WEEKS)
-            printf("%6d", p_weekInfo[i]->rank);
+            printf("　　%2d", p_weekInfo[i]->rank);
         else if (type == PRINT_TYPE_CURRENT)
-            printf("%6d", p_weekInfo[i]->p_playerInfo->rank);
+            printf("　　%2d", p_weekInfo[i]->p_playerInfo->rank);
         if (type == PRINT_TYPE_CURRENT)
-            printf("%6c", p_weekInfo[i]->p_playerInfo->level);
+            printf("　　%2c", p_weekInfo[i]->p_playerInfo->level);
         printf("\n");
     }
 }
