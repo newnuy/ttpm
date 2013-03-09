@@ -1023,9 +1023,9 @@ void printPlayerInfoTableHeadByType(int type)
     //printf("    成绩");
     if (type == PRINT_TYPE_CURRENT || type == PRINT_TYPE_CURRENT_WEEK ||
             type == PRINT_TYPE_WEEK || type == PRINT_TYPE_SOME_WEEKS)
-        printf("  排名");
+        printf("    排名");
     if (type == PRINT_TYPE_CURRENT)
-        printf("  级别");
+        printf("    级别");
     printf("\n");
 }
 
@@ -1051,11 +1051,11 @@ void printPlayerInfoTableBodyByType(struct weekInfoStruct *p_weekInfo[],
         //printf("%8.2lf", p_weekInfo[i]->score);
         if (type == PRINT_TYPE_CURRENT_WEEK || type == PRINT_TYPE_WEEK ||
                 type == PRINT_TYPE_SOME_WEEKS)
-            printf("　　%2d", p_weekInfo[i]->rank);
+            printf("　　%4d", p_weekInfo[i]->rank);
         else if (type == PRINT_TYPE_CURRENT)
-            printf("　　%2d", p_weekInfo[i]->p_playerInfo->rank);
+            printf("　　%4d", p_weekInfo[i]->p_playerInfo->rank);
         if (type == PRINT_TYPE_CURRENT)
-            printf("　　%2c", p_weekInfo[i]->p_playerInfo->level);
+            printf("　　%4c", p_weekInfo[i]->p_playerInfo->level);
         printf("\n");
     }
 }
