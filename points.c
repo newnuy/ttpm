@@ -849,7 +849,7 @@ void printOneGameResult(struct playerInfo *p_playerInfo[], int playerNum,
         /* print the winner */
         for (j = 0; j < playerNum; ++j)
             if (p_playerInfo[j]->num == oneGameResult[i][0]) {
-                printf("(%c)%s", p_playerInfo[j]->iceLevel,
+                printf("(%c)%s", p_playerInfo[j]->level,
                         p_playerInfo[j]->name);
                 if (oneGameResult[i][2] == 2)
                     printf("<弃权>");
@@ -871,7 +871,7 @@ void printOneGameResult(struct playerInfo *p_playerInfo[], int playerNum,
                 else
                     printf("<弃权>");
                 printf("%s(%c)", p_playerInfo[j]->name,
-                        p_playerInfo[j]->iceLevel);
+                        p_playerInfo[j]->level);
             }
 
         printf("\n");
