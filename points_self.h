@@ -18,7 +18,7 @@
 
 #define PLAYERS_NUM_MAX         64
 #define WEEK_NUM_MAX            64
-#define PIC_HEIGHT              21
+#define PIC_HEIGHT              11
 /* user defined end */
 
 
