@@ -6,11 +6,11 @@
 
 /* user defined begin */
 #define BASE_POINT              1000
-#define WIN_BASE_POINT          15
-#define WIN_STEP_POINT          5
-#define FAIL_BASE_POINT         -12
-#define FAIL_STEP_POINT         -3
-#define GIVE_UP_BASE_POINT      -40
+#define WIN_BASE_POINT          30
+#define WIN_STEP_POINT          10
+#define FAIL_BASE_POINT         -20
+#define FAIL_STEP_POINT         0
+#define GIVE_UP_BASE_POINT      -60
 #define LEVEL_NUM               4
 #define DEFAULT_LEVEL           'C'
 #define CUSTOM_SCORE            0
@@ -18,7 +18,7 @@
 
 #define PLAYERS_NUM_MAX         64
 #define WEEK_NUM_MAX            64
-#define PIC_HEIGHT              11
+#define PIC_HEIGHT              7
 /* user defined end */
 
 
